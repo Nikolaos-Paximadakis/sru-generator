@@ -266,24 +266,28 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
             # Validate monetary values are within allowed range
             if amount_sold_for < 0 or amount_sold_for > MAX_MONETARY_VALUE:
                 logger.error(
-                    f"Invalid sale price {amount_sold_for} in group totals. Must be between 0 and {MAX_MONETARY_VALUE}. Using 0."
+                    "Invalid sale price %s in group totals. Must be between 0 and %s. Using 0.",
+                    amount_sold_for, MAX_MONETARY_VALUE
                 )
                 amount_sold_for = 0
             if cost_basis < 0 or cost_basis > MAX_MONETARY_VALUE:
                 logger.error(
-                    f"Invalid cost basis {cost_basis} in group totals. Must be between 0 and {MAX_MONETARY_VALUE}. Using 0."
+                    "Invalid cost basis %s in group totals. Must be between 0 and %s. Using 0.",
+                    cost_basis, MAX_MONETARY_VALUE
                 )
                 cost_basis = 0
             if abs(item_pl_from_data) > MAX_MONETARY_VALUE:
                 logger.error(
-                    f"Invalid profit/loss {item_pl_from_data} in group totals. Must be between -{MAX_MONETARY_VALUE} and {MAX_MONETARY_VALUE}. Using 0."
+                    "Invalid profit/loss %s in group totals. Must be between -%s and %s. Using 0.",
+                    item_pl_from_data, MAX_MONETARY_VALUE, MAX_MONETARY_VALUE
                 )
                 item_pl_from_data = 0
 
             # Add to totals with validation
             if group_total_amount_sold + amount_sold_for > MAX_MONETARY_VALUE:
                 logger.error(
-                    f"Group total sale price would exceed maximum allowed value ({MAX_MONETARY_VALUE}). Truncating to maximum."
+                    "Group total sale price would exceed maximum allowed value (%s). Truncating to maximum.",
+                    MAX_MONETARY_VALUE
                 )
                 group_total_amount_sold = MAX_MONETARY_VALUE
             else:
@@ -291,7 +295,8 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
 
             if group_total_cost_basis + cost_basis > MAX_MONETARY_VALUE:
                 logger.error(
-                    f"Group total cost basis would exceed maximum allowed value ({MAX_MONETARY_VALUE}). Truncating to maximum."
+                    "Group total cost basis would exceed maximum allowed value (%s). Truncating to maximum.",
+                    MAX_MONETARY_VALUE
                 )
                 group_total_cost_basis = MAX_MONETARY_VALUE
             else:
@@ -301,7 +306,8 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
             if item_pl_from_data >= 0:
                 if current_group_total_profit + item_pl_from_data > MAX_MONETARY_VALUE:
                     logger.error(
-                        f"Group total profit would exceed maximum allowed value ({MAX_MONETARY_VALUE}). Truncating to maximum."
+                        "Group total profit would exceed maximum allowed value (%s). Truncating to maximum.",
+                        MAX_MONETARY_VALUE
                     )
                     current_group_total_profit = MAX_MONETARY_VALUE
                 else:
@@ -310,7 +316,8 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
                 loss_amount = abs(item_pl_from_data)
                 if current_group_total_loss + loss_amount > MAX_MONETARY_VALUE:
                     logger.error(
-                        f"Group total loss would exceed maximum allowed value ({MAX_MONETARY_VALUE}). Truncating to maximum."
+                        "Group total loss would exceed maximum allowed value (%s). Truncating to maximum.",
+                        MAX_MONETARY_VALUE
                     )
                     current_group_total_loss = MAX_MONETARY_VALUE
                 else:
@@ -386,7 +393,8 @@ def generate_sru_trade_content(
             # Ensure group number is within valid range
             if group_counter > MAX_GROUP_NUMBER:
                 logger.error(
-                    f"Maximum number of groups ({MAX_GROUP_NUMBER}) exceeded. Cannot generate more groups."
+                    "Maximum number of groups (%s) exceeded. Cannot generate more groups.",
+                    MAX_GROUP_NUMBER
                 )
                 break
 
@@ -508,7 +516,7 @@ def write_sru_file(file_path: str, content: str) -> bool:
         return False
     except Exception as e:
         logger.error(
-            f"An unexpected error occurred while writing SRU file '{file_path}': {e}"
+            "An unexpected error occurred while writing SRU file '%s': %s", file_path, e
         )
         return False
 
