@@ -51,7 +51,7 @@ except ImportError:
         """Fallback: return text unchanged."""
         return text
 
-    CHARACTER_CONVERTERS = {}
+    CHARACTER_CONVERTERS = {"none": no_conversion}
 
     def get_character_converter(converter_name: str):  # pylint: disable=unused-argument
         """Fallback: return no_conversion function."""
