@@ -92,7 +92,7 @@ class CurrencyConverter:
             return 1.0 / self.exchange_rates[inverse_key]
 
         # Try through default currency
-        if (from_currency != self.default_currency and 
+        if (from_currency != self.default_currency and
                 to_currency != self.default_currency):
             try:
                 from_to_default = self.get_exchange_rate(
