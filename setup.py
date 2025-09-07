@@ -7,18 +7,21 @@ from setuptools import setup, find_packages
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open("requirements.txt", "r", encoding="utf-8") as fh:
-    requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
+try:
+    with open("requirements.txt", "r", encoding="utf-8") as fh:
+        requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
+except FileNotFoundError:
+    requirements = []
 
 setup(
     name="sru-generator",
-    version="1.0.0",
-    author="Your Name",
-    author_email="your.email@example.com",
+    version="1.1.0",
+    author="Nikolaos Paximadakis",
+    author_email="nikolaos.paximadakis@example.com",
     description="A Python package for generating Swedish SRU (Skatteverket) files",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/sru-generator",
+    url="https://github.com/Nikolaos-Paximadakis/sru-generator",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
