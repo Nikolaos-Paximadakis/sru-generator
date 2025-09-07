@@ -5,10 +5,10 @@ This module provides all the core functionality for generating SRU files
 according to Swedish tax authority specifications.
 """
 
+import os
 from datetime import datetime
 from decimal import ROUND_HALF_EVEN, Decimal
-import os
-from typing import Any, List, Dict
+from typing import Any, Callable, Dict, List, Optional
 
 from .utils import setup_logger
 
@@ -32,7 +32,8 @@ SRU_FIELD_LOSS_SUFFIX = "5"
 # --- END CORRECTED CONSTANT DEFINITIONS ---
 
 SRU_FIELD_GROUP_TOTAL_SOLD = "#UPPGIFT 3300 {amount}"  # Summa Försäljningspris
-SRU_FIELD_GROUP_TOTAL_COST_BASIS = "#UPPGIFT 3301 {amount}"  # Summa Omkostnadsbelopp
+# Summa Omkostnadsbelopp
+SRU_FIELD_GROUP_TOTAL_COST_BASIS = "#UPPGIFT 3301 {amount}"
 SRU_FIELD_GROUP_TOTAL_PROFIT = "#UPPGIFT 3304 {amount}"  # Summa Vinst
 SRU_FIELD_GROUP_TOTAL_LOSS = "#UPPGIFT 3305 {amount}"  # Summa Förlust
 SRU_FIELD_BLANKETT_END = "#BLANKETTSLUT"
@@ -83,17 +84,17 @@ def generate_sru_header(
 
 
 def format_trade_item_sru(
-    row_data: Dict[str, Any], 
-    item_index_in_group: int, 
-    group_index: int,
-    character_converter: callable = None
+    row_data: Dict[str, Any],
+    item_index_in_group: int,
+    group_index: int,  # Currently unused but kept for API compatibility
+    character_converter: Optional[Callable[[str], str]] = None,
 ) -> str:
     """
     Formats the SRU lines for a single trade item (quantity, stock, sale, cost, profit/loss).
     Handles data conversion, rounding, and profit/loss split.
     Quantity must be an integer between 0 and MAX_MONETARY_VALUE.
     All monetary values (sale price, cost basis, profit, loss) must be integers between 0 and MAX_MONETARY_VALUE.
-    
+
     Expected keys in row_data:
     - quantity: Number of shares/units sold
     - stock: Stock name/identifier
@@ -108,7 +109,11 @@ def format_trade_item_sru(
         raw_quantity = int(row_data.get("quantity", 0))
         if raw_quantity < 0 or raw_quantity > MAX_MONETARY_VALUE:
             logger.error(
-                f"Invalid quantity {raw_quantity} for stock '{row_data.get('stock', 'UNKNOWN_STOCK')}'. Quantity must be between 0 and {MAX_MONETARY_VALUE}. Using 0."
+                "Invalid quantity %s for stock '%s'. "
+                "Quantity must be between 0 and %s. Using 0.",
+                raw_quantity,
+                row_data.get("stock", "UNKNOWN_STOCK"),
+                MAX_MONETARY_VALUE,
             )
             quantity = 0
         else:
@@ -116,16 +121,16 @@ def format_trade_item_sru(
 
         stock_name_raw: str = str(row_data.get("stock", "UNKNOWN_STOCK"))
         if character_converter:
-            stock_name: str = character_converter(stock_name_raw)
+            stock_name = character_converter(stock_name_raw)
         else:
-            stock_name: str = stock_name_raw
+            stock_name = stock_name_raw
         # Limit stock name length
         stock_name = stock_name[:NUMBER_OF_CHARACTERS_FOR_STOCK_NAME]
 
         try:
             amount_sold_for_decimal = Decimal(str(row_data.get("net value", 0)))
         except Exception:
-            logger.warning(f"Invalid 'net value' for '{stock_name}'. Using 0.")
+            logger.warning("Invalid 'net value' for '%s'. Using 0.", stock_name)
             amount_sold_for_decimal = Decimal(0)
 
         try:
@@ -134,14 +139,14 @@ def format_trade_item_sru(
             )
         except Exception:
             logger.warning(
-                f"Invalid 'total net value of purchase' for '{stock_name}'. Using 0."
+                "Invalid 'total net value of purchase' for '%s'. Using 0.", stock_name
             )
             cost_basis_decimal = Decimal(0)
 
         try:
             profit_loss_from_data_decimal = Decimal(str(row_data.get("profit/loss", 0)))
         except Exception:
-            logger.warning(f"Invalid 'profit/loss' for '{stock_name}'. Using 0.")
+            logger.warning("Invalid 'profit/loss' for '%s'. Using 0.", stock_name)
             profit_loss_from_data_decimal = Decimal(0)
 
         # Convert to integers and validate ranges
@@ -162,17 +167,27 @@ def format_trade_item_sru(
         # Validate monetary values are within allowed range
         if amount_sold_for < 0 or amount_sold_for > MAX_MONETARY_VALUE:
             logger.error(
-                f"Invalid sale price {amount_sold_for} for '{stock_name}'. Must be between 0 and {MAX_MONETARY_VALUE}. Using 0."
+                "Invalid sale price %s for '%s'. Must be between 0 and %s. Using 0.",
+                amount_sold_for,
+                stock_name,
+                MAX_MONETARY_VALUE,
             )
             amount_sold_for = 0
         if cost_basis < 0 or cost_basis > MAX_MONETARY_VALUE:
             logger.error(
-                f"Invalid cost basis {cost_basis} for '{stock_name}'. Must be between 0 and {MAX_MONETARY_VALUE}. Using 0."
+                "Invalid cost basis %s for '%s'. Must be between 0 and %s. Using 0.",
+                cost_basis,
+                stock_name,
+                MAX_MONETARY_VALUE,
             )
             cost_basis = 0
         if abs(profit_loss_from_data) > MAX_MONETARY_VALUE:
             logger.error(
-                f"Invalid profit/loss {profit_loss_from_data} for '{stock_name}'. Must be between -{MAX_MONETARY_VALUE} and {MAX_MONETARY_VALUE}. Using 0."
+                "Invalid profit/loss %s for '%s'. Must be between -%s and %s. Using 0.",
+                profit_loss_from_data,
+                stock_name,
+                MAX_MONETARY_VALUE,
+                MAX_MONETARY_VALUE,
             )
             profit_loss_from_data = 0
 
@@ -180,11 +195,18 @@ def format_trade_item_sru(
         difference = abs(calculated_profit_loss - profit_loss_from_data)
         if difference > 1:  # Using 1 since we're now working with integers
             logger.warning(
-                f"Calculated profit/loss mismatch for '{stock_name}': calculated={calculated_profit_loss}, data={profit_loss_from_data}. Using data value for SRU."
+                "Calculated profit/loss mismatch for '%s': calculated=%s, data=%s. Using data value for SRU.",
+                stock_name,
+                calculated_profit_loss,
+                profit_loss_from_data,
             )
         elif difference > 0:
             logger.info(
-                f"Small profit/loss difference for '{stock_name}': calculated={calculated_profit_loss}, data={profit_loss_from_data}. Difference={difference}. Using data value for SRU."
+                "Small profit/loss difference for '%s': calculated=%s, data=%s. Difference=%s. Using data value for SRU.",
+                stock_name,
+                calculated_profit_loss,
+                profit_loss_from_data,
+                difference,
             )
 
         base_code = 3100 + (item_index_in_group * 10)
@@ -200,7 +222,9 @@ def format_trade_item_sru(
 
     except Exception as e:
         logger.error(
-            f"Error formatting trade item '{row_data.get('stock', 'N/A')}': {e}. Skipping this item in output."
+            "Error formatting trade item '%s': %s. Skipping this item in output.",
+            row_data.get("stock", "N/A"),
+            e,
         )
         return ""
 
@@ -212,10 +236,10 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
     Calculates the total sales, cost basis, profit, and loss for a group of trade items.
     All monetary values must be integers between 0 and MAX_MONETARY_VALUE.
     Profits and losses are tracked separately, with losses stored as positive numbers.
-    
+
     Expected keys in each item of group_data:
     - net value: Sale price
-    - total net value of purchase: Cost basis  
+    - total net value of purchase: Cost basis
     - profit/loss: Profit or loss amount
     """
     group_total_amount_sold = 0
@@ -245,24 +269,32 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
             # Validate monetary values are within allowed range
             if amount_sold_for < 0 or amount_sold_for > MAX_MONETARY_VALUE:
                 logger.error(
-                    f"Invalid sale price {amount_sold_for} in group totals. Must be between 0 and {MAX_MONETARY_VALUE}. Using 0."
+                    "Invalid sale price %s in group totals. Must be between 0 and %s. Using 0.",
+                    amount_sold_for,
+                    MAX_MONETARY_VALUE,
                 )
                 amount_sold_for = 0
             if cost_basis < 0 or cost_basis > MAX_MONETARY_VALUE:
                 logger.error(
-                    f"Invalid cost basis {cost_basis} in group totals. Must be between 0 and {MAX_MONETARY_VALUE}. Using 0."
+                    "Invalid cost basis %s in group totals. Must be between 0 and %s. Using 0.",
+                    cost_basis,
+                    MAX_MONETARY_VALUE,
                 )
                 cost_basis = 0
             if abs(item_pl_from_data) > MAX_MONETARY_VALUE:
                 logger.error(
-                    f"Invalid profit/loss {item_pl_from_data} in group totals. Must be between -{MAX_MONETARY_VALUE} and {MAX_MONETARY_VALUE}. Using 0."
+                    "Invalid profit/loss %s in group totals. Must be between -%s and %s. Using 0.",
+                    item_pl_from_data,
+                    MAX_MONETARY_VALUE,
+                    MAX_MONETARY_VALUE,
                 )
                 item_pl_from_data = 0
 
             # Add to totals with validation
             if group_total_amount_sold + amount_sold_for > MAX_MONETARY_VALUE:
                 logger.error(
-                    f"Group total sale price would exceed maximum allowed value ({MAX_MONETARY_VALUE}). Truncating to maximum."
+                    "Group total sale price would exceed maximum allowed value (%s). Truncating to maximum.",
+                    MAX_MONETARY_VALUE,
                 )
                 group_total_amount_sold = MAX_MONETARY_VALUE
             else:
@@ -270,7 +302,8 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
 
             if group_total_cost_basis + cost_basis > MAX_MONETARY_VALUE:
                 logger.error(
-                    f"Group total cost basis would exceed maximum allowed value ({MAX_MONETARY_VALUE}). Truncating to maximum."
+                    "Group total cost basis would exceed maximum allowed value (%s). Truncating to maximum.",
+                    MAX_MONETARY_VALUE,
                 )
                 group_total_cost_basis = MAX_MONETARY_VALUE
             else:
@@ -280,7 +313,8 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
             if item_pl_from_data >= 0:
                 if current_group_total_profit + item_pl_from_data > MAX_MONETARY_VALUE:
                     logger.error(
-                        f"Group total profit would exceed maximum allowed value ({MAX_MONETARY_VALUE}). Truncating to maximum."
+                        "Group total profit would exceed maximum allowed value (%s). Truncating to maximum.",
+                        MAX_MONETARY_VALUE,
                     )
                     current_group_total_profit = MAX_MONETARY_VALUE
                 else:
@@ -289,7 +323,8 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
                 loss_amount = abs(item_pl_from_data)
                 if current_group_total_loss + loss_amount > MAX_MONETARY_VALUE:
                     logger.error(
-                        f"Group total loss would exceed maximum allowed value ({MAX_MONETARY_VALUE}). Truncating to maximum."
+                        "Group total loss would exceed maximum allowed value (%s). Truncating to maximum.",
+                        MAX_MONETARY_VALUE,
                     )
                     current_group_total_loss = MAX_MONETARY_VALUE
                 else:
@@ -297,7 +332,8 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
 
         except Exception as e:
             logger.warning(
-                f"Could not sum values for a row in the current group: {e}. Skipping this row for totals calculation."
+                "Could not sum values for a row in the current group: %s. Skipping this row for totals calculation.",
+                e,
             )
             continue
 
@@ -330,19 +366,19 @@ def format_group_totals_sru(totals: Dict[str, int]) -> str:
 
 
 def generate_sru_trade_content(
-    trade_data: List[Dict[str, Any]], 
-    full_name: str, 
+    trade_data: List[Dict[str, Any]],
+    full_name: str,
     personal_number: str,
     year: int = 2024,
     items_per_group: int = 9,
-    character_converter: callable = None
+    character_converter: Optional[Callable[[str], str]] = None,
 ) -> str:
     """
     Generates the main trade content section of the SRU file, including
     individual items and group totals. Handles the grouping logic.
     Group numbers must be integers between 1 and MAX_GROUP_NUMBER.
     Each group starts with a new BLANKETT and ends with BLANKETTSLUT.
-    
+
     Args:
         trade_data: List of trade dictionaries with required keys
         full_name: Full name for SRU file
@@ -364,7 +400,8 @@ def generate_sru_trade_content(
             # Ensure group number is within valid range
             if group_counter > MAX_GROUP_NUMBER:
                 logger.error(
-                    f"Maximum number of groups ({MAX_GROUP_NUMBER}) exceeded. Cannot generate more groups."
+                    "Maximum number of groups (%s) exceeded. Cannot generate more groups.",
+                    MAX_GROUP_NUMBER,
                 )
                 break
 
@@ -384,9 +421,7 @@ def generate_sru_trade_content(
 
         if (i + 1) % items_per_group == 0 or i == len(trade_data) - 1:
             current_group_end_index = i + 1
-            current_group_data = trade_data[
-                group_start_index:current_group_end_index
-            ]
+            current_group_data = trade_data[group_start_index:current_group_end_index]
             group_totals = calculate_group_totals(current_group_data)
             content_trades += format_group_totals_sru(group_totals)
             # Add BLANKETTSLUT at the end of each group
@@ -405,12 +440,12 @@ def merge_sru_groups(
     crypto_groups: List[Dict[str, List[str]]],
     full_name: str,
     personal_number: str,
-    year: int = 2024
+    year: int = 2024,
 ) -> str:
     """
     Merges stock and crypto groups, ensuring stocks come first followed by crypto UPPGIFTER.
     Returns the merged content as a string.
-    
+
     Args:
         stock_content: SRU content for stock trades
         crypto_groups: List of crypto group dictionaries
@@ -423,7 +458,8 @@ def merge_sru_groups(
 
     # Split stock content into groups
     stock_groups = stock_content.split("#BLANKETT K4-")
-    stock_groups = [g for g in stock_groups if g.strip()]  # Remove empty groups
+    # Remove empty groups
+    stock_groups = [g for g in stock_groups if g.strip()]
 
     # Get the maximum number of groups
     max_stock_groups = len(stock_groups)
@@ -431,8 +467,8 @@ def merge_sru_groups(
     max_groups = max(max_stock_groups, max_crypto_groups)
 
     logger.info("Group Analysis:")
-    logger.info(f"Stock groups: {max_stock_groups}")
-    logger.info(f"Crypto groups: {max_crypto_groups}")
+    logger.info("Stock groups: %s", max_stock_groups)
+    logger.info("Crypto groups: %s", max_crypto_groups)
 
     merged_content = ""
 
@@ -480,19 +516,19 @@ def write_sru_file(file_path: str, content: str) -> bool:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(content)
-        logger.info(f"SRU file '{file_path}' has been successfully created.")
+        logger.info("SRU file '%s' has been successfully created.", file_path)
         return True
     except IOError as e:
-        logger.error(f"Failed to write SRU file '{file_path}': {e}")
+        logger.error("Failed to write SRU file '%s': %s", file_path, e)
         return False
     except Exception as e:
         logger.error(
-            f"An unexpected error occurred while writing SRU file '{file_path}': {e}"
+            "An unexpected error occurred while writing SRU file '%s': %s", file_path, e
         )
         return False
 
 
-def read_crypto_sru_content(crypto_file_path: str) -> List[Dict[str, List[str]]]:
+def read_crypto_sru_content(crypto_file_path: str) -> List[Dict[str, Any]]:
     """
     Reads the crypto SRU content from the specified file path.
     Returns a list of dictionaries, where each dictionary represents a group and contains:
@@ -505,7 +541,7 @@ def read_crypto_sru_content(crypto_file_path: str) -> List[Dict[str, List[str]]]
         )
         return []
 
-    logger.info(f"Starting to read crypto SRU file from: {crypto_file_path}")
+    logger.info("Starting to read crypto SRU file from: %s", crypto_file_path)
 
     try:
         with open(crypto_file_path, "r", encoding="utf-8") as file:
@@ -516,7 +552,7 @@ def read_crypto_sru_content(crypto_file_path: str) -> List[Dict[str, List[str]]]
         parsed_groups = []
 
         for group in groups[1:]:  # Skip the first empty split
-            group_data = {"group_number": None, "uppgifter": []}
+            group_data: Dict[str, Any] = {"group_number": None, "uppgifter": []}
 
             # Process each line in the group
             lines = group.split("\n")
@@ -534,7 +570,7 @@ def read_crypto_sru_content(crypto_file_path: str) -> List[Dict[str, List[str]]]
                         group_data["group_number"] = group_number
                         found_7014 = True
                     except (ValueError, IndexError):
-                        logger.error(f"Could not parse group number from line: {line}")
+                        logger.error("Could not parse group number from line: %s", line)
                     continue
 
                 if found_7014 and line.startswith("#UPPGIFT"):
@@ -550,5 +586,5 @@ def read_crypto_sru_content(crypto_file_path: str) -> List[Dict[str, List[str]]]
         return parsed_groups
 
     except Exception as e:
-        logger.error(f"Error reading crypto SRU file: {e}")
+        logger.error("Error reading crypto SRU file: %s", e)
         return []

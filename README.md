@@ -1,5 +1,11 @@
 # SRU Generator
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Educational Use](https://img.shields.io/badge/Use-Educational%20Only-red.svg)](https://github.com/Nikolaos-Paximadakis/sru-generator)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Status: Beta](https://img.shields.io/badge/Status-Beta-orange.svg)](https://github.com/Nikolaos-Paximadakis/sru-generator)
+[![Tests](https://github.com/Nikolaos-Paximadakis/sru-generator/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/Nikolaos-Paximadakis/sru-generator/actions)
+
 A Python package for generating Swedish SRU (Skatteverket) files for tax reporting.
 
 ## Overview
@@ -51,7 +57,7 @@ pip install sru-generator
 
 ### From source
 ```bash
-git clone https://github.com/yourusername/sru-generator.git
+git clone https://github.com/Nikolaos-Paximadakis/sru-generator.git
 cd sru-generator
 pip install -e .
 ```
@@ -547,7 +553,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Support
 
-For questions, issues, or contributions, please visit the [GitHub repository](https://github.com/yourusername/sru-generator).
+For questions, issues, or contributions, please visit the [GitHub repository](https://github.com/Nikolaos-Paximadakis/sru-generator).
 
 ## Changelog
 
