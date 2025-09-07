@@ -66,9 +66,7 @@ class StringValidator(Validator):
 
         if self.max_length and len(value) > self.max_length:
             raise ValidationError(
-                f"Field '{
-                    self.field_name}' must be at most {
-                    self.max_length} characters",
+                f"Field '{self.field_name}' must be at most {self.max_length} characters",
                 field=self.field_name,
                 value=value)
 

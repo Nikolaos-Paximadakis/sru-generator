@@ -339,21 +339,15 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
 def format_group_totals_sru(totals: Dict[str, int]) -> str:
     """Formats the SRU lines for group totals (Summa Försäljningspris, etc.)."""
     content = ""
-    content += f"{
-        SRU_FIELD_GROUP_TOTAL_SOLD.format(
-            amount=totals['total_sold'])}\n"
-    content += f"{
-        SRU_FIELD_GROUP_TOTAL_COST_BASIS.format(
-            amount=totals['total_cost_basis'])}\n"
+    content += f"{SRU_FIELD_GROUP_TOTAL_SOLD.format(amount=totals['total_sold'])}\n"
+    content += f"{SRU_FIELD_GROUP_TOTAL_COST_BASIS.format(amount=totals['total_cost_basis'])}\n"
 
     if totals["total_profit"] > 0:
         content += (
             f"{SRU_FIELD_GROUP_TOTAL_PROFIT.format(amount=totals['total_profit'])}\n"
         )
     if totals["total_loss"] > 0:
-        content += f"{
-            SRU_FIELD_GROUP_TOTAL_LOSS.format(
-                amount=totals['total_loss'])}\n"
+        content += f"{SRU_FIELD_GROUP_TOTAL_LOSS.format(amount=totals['total_loss'])}\n"
     return content
 
 
