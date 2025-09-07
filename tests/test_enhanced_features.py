@@ -5,11 +5,19 @@ Tests for enhanced SRU Generator features.
 import unittest
 from decimal import Decimal
 
-from sru_generator import (BusinessRuleError, ConfigurationError,
-                           CurrencyError, SRUConfig, ValidationError,
-                           convert_currency, convert_to_sek, create_config,
-                           set_exchange_rate, validate_personal_info,
-                           validate_trade_data)
+from sru_generator import (
+    BusinessRuleError,
+    ConfigurationError,
+    CurrencyError,
+    SRUConfig,
+    ValidationError,
+    convert_currency,
+    convert_to_sek,
+    create_config,
+    set_exchange_rate,
+    validate_personal_info,
+    validate_trade_data,
+)
 
 
 class TestSRUConfig(unittest.TestCase):
