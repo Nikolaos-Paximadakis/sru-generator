@@ -1,10 +1,10 @@
 # SRU Generator
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Educational Use](https://img.shields.io/badge/Use-Educational%20Only-red.svg)](https://github.com/YOUR_USERNAME/sru-generator)
+[![Educational Use](https://img.shields.io/badge/Use-Educational%20Only-red.svg)](https://github.com/Nikolaos-Paximadakis/sru-generator)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Status: Beta](https://img.shields.io/badge/Status-Beta-orange.svg)](https://github.com/YOUR_USERNAME/sru-generator)
-[![Tests](https://github.com/YOUR_USERNAME/sru-generator/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/YOUR_USERNAME/sru-generator/actions)
+[![Status: Beta](https://img.shields.io/badge/Status-Beta-orange.svg)](https://github.com/Nikolaos-Paximadakis/sru-generator)
+[![Tests](https://github.com/Nikolaos-Paximadakis/sru-generator/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/Nikolaos-Paximadakis/sru-generator/actions)
 
 A Python package for generating Swedish SRU (Skatteverket) files for tax reporting.
 
