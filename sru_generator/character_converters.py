@@ -14,16 +14,41 @@ if text_converters_path not in sys.path:
     sys.path.insert(0, text_converters_path)
 
 # Import from the shared text_converters package
-from character_converters import (
-    convert_greek_characters_to_english,
-    convert_swedish_characters_to_english,
-    convert_german_characters_to_english,
-    convert_french_characters_to_english,
-    convert_spanish_characters_to_english,
-    no_conversion,
-    CHARACTER_CONVERTERS,
-    get_character_converter,
-)
+try:
+    from character_converters import (
+        convert_greek_characters_to_english,
+        convert_swedish_characters_to_english,
+        convert_german_characters_to_english,
+        convert_french_characters_to_english,
+        convert_spanish_characters_to_english,
+        no_conversion,
+        CHARACTER_CONVERTERS,
+        get_character_converter,
+    )
+except ImportError:
+    # Fallback if text_converters is not available
+    def convert_greek_characters_to_english(text: str) -> str:
+        return text
+
+    def convert_swedish_characters_to_english(text: str) -> str:
+        return text
+
+    def convert_german_characters_to_english(text: str) -> str:
+        return text
+
+    def convert_french_characters_to_english(text: str) -> str:
+        return text
+
+    def convert_spanish_characters_to_english(text: str) -> str:
+        return text
+
+    def no_conversion(text: str) -> str:
+        return text
+
+    CHARACTER_CONVERTERS = {}
+
+    def get_character_converter(converter_name: str):
+        return no_conversion
 
 # Re-export for backward compatibility
 __all__ = [
