@@ -51,12 +51,18 @@ except ImportError:
         """Fallback: return text unchanged."""
         return text
 
-    CHARACTER_CONVERTERS = {"none": no_conversion}
+    CHARACTER_CONVERTERS = {
+        "none": no_conversion,
+        "greek": convert_greek_characters_to_english,
+        "swedish": convert_swedish_characters_to_english,
+        "german": convert_german_characters_to_english,
+        "french": convert_french_characters_to_english,
+        "spanish": convert_spanish_characters_to_english,
+    }
 
-    def get_character_converter(converter_name: str):  # pylint: disable=unused-argument
-        """Fallback: return no_conversion function."""
-        # converter_name is ignored in fallback mode
-        return no_conversion
+    def get_character_converter(converter_name: str):
+        """Fallback: return the requested converter function."""
+        return CHARACTER_CONVERTERS.get(converter_name, no_conversion)
 
 
 # Re-export for backward compatibility
