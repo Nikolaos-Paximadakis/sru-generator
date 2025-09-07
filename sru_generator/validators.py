@@ -103,9 +103,7 @@ class IntegerValidator(Validator):
 
         if not isinstance(value, int):
             raise ValidationError(
-                f"Field '{
-                    self.field_name}' must be an integer, got {
-                    type(value).__name__}",
+                f"Field '{self.field_name}' must be an integer, got {type(value).__name__}",
                 field=self.field_name,
                 value=value)
 
