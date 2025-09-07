@@ -109,10 +109,9 @@ def format_trade_item_sru(
         raw_quantity = int(row_data.get("quantity", 0))
         if raw_quantity < 0 or raw_quantity > MAX_MONETARY_VALUE:
             logger.error(
-                f"Invalid quantity {raw_quantity} for stock '{
-                    row_data.get(
-                        'stock',
-                        'UNKNOWN_STOCK')}'. Quantity must be between 0 and {MAX_MONETARY_VALUE}. Using 0.")
+                f"Invalid quantity {raw_quantity} for stock "
+                f"'{row_data.get('stock', 'UNKNOWN_STOCK')}'. "
+                f"Quantity must be between 0 and {MAX_MONETARY_VALUE}. Using 0.")
             quantity = 0
         else:
             quantity = raw_quantity

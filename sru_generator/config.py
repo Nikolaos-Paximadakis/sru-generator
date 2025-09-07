@@ -88,8 +88,8 @@ class SRUConfig:
         # Validate decimal places
         if self.decimal_places < 0 or self.decimal_places > 10:
             raise ConfigurationError(
-                f"decimal_places must be between 0 and 10, got {
-                    self.decimal_places}",
+                f"decimal_places must be between 0 and 10, got "
+                f"{self.decimal_places}",
                 config_key="decimal_places",
                 config_value=self.decimal_places)
 

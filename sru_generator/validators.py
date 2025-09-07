@@ -52,9 +52,8 @@ class StringValidator(Validator):
     def _validate_value(self, value: Any, context: Dict[str, Any]) -> str:
         if not isinstance(value, str):
             raise ValidationError(
-                f"Field '{
-                    self.field_name}' must be a string, got {
-                    type(value).__name__}",
+                f"Field '{self.field_name}' must be a string, got "
+                f"{type(value).__name__}",
                 field=self.field_name,
                 value=value)
 
