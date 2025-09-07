@@ -59,9 +59,8 @@ class StringValidator(Validator):
 
         if self.min_length and len(value) < self.min_length:
             raise ValidationError(
-                f"Field '{
-                    self.field_name}' must be at least {
-                    self.min_length} characters",
+                f"Field '{self.field_name}' must be at least "
+                f"{self.min_length} characters",
                 field=self.field_name,
                 value=value)
 

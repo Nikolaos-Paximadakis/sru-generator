@@ -197,8 +197,7 @@ def format_trade_item_sru(
         if profit_loss_from_data >= 0:
             content += f"#UPPGIFT {base_code + 4} {profit_loss_from_data}\n"
         else:
-            content += f"#UPPGIFT {base_code +
-                                   5} {abs(profit_loss_from_data)}\n"
+            content += f"#UPPGIFT {base_code + 5} {abs(profit_loss_from_data)}\n"
 
     except Exception as e:
         logger.error(
