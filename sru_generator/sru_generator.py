@@ -8,7 +8,7 @@ according to Swedish tax authority specifications.
 import os
 from datetime import datetime
 from decimal import ROUND_HALF_EVEN, Decimal
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 from .utils import setup_logger
 
@@ -87,7 +87,7 @@ def format_trade_item_sru(
     row_data: Dict[str, Any],
     item_index_in_group: int,
     group_index: int,  # Currently unused but kept for API compatibility
-    character_converter: callable = None,
+    character_converter: Optional[Callable[[str], str]] = None,
 ) -> str:
     """
     Formats the SRU lines for a single trade item (quantity, stock, sale, cost, profit/loss).
@@ -121,9 +121,9 @@ def format_trade_item_sru(
 
         stock_name_raw: str = str(row_data.get("stock", "UNKNOWN_STOCK"))
         if character_converter:
-            stock_name: str = character_converter(stock_name_raw)
+            stock_name = character_converter(stock_name_raw)
         else:
-            stock_name: str = stock_name_raw
+            stock_name = stock_name_raw
         # Limit stock name length
         stock_name = stock_name[:NUMBER_OF_CHARACTERS_FOR_STOCK_NAME]
 
@@ -371,7 +371,7 @@ def generate_sru_trade_content(
     personal_number: str,
     year: int = 2024,
     items_per_group: int = 9,
-    character_converter: callable = None,
+    character_converter: Optional[Callable[[str], str]] = None,
 ) -> str:
     """
     Generates the main trade content section of the SRU file, including
@@ -528,7 +528,7 @@ def write_sru_file(file_path: str, content: str) -> bool:
         return False
 
 
-def read_crypto_sru_content(crypto_file_path: str) -> List[Dict[str, List[str]]]:
+def read_crypto_sru_content(crypto_file_path: str) -> List[Dict[str, Any]]:
     """
     Reads the crypto SRU content from the specified file path.
     Returns a list of dictionaries, where each dictionary represents a group and contains:
@@ -552,7 +552,7 @@ def read_crypto_sru_content(crypto_file_path: str) -> List[Dict[str, List[str]]]
         parsed_groups = []
 
         for group in groups[1:]:  # Skip the first empty split
-            group_data = {"group_number": None, "uppgifter": []}
+            group_data: Dict[str, Any] = {"group_number": None, "uppgifter": []}
 
             # Process each line in the group
             lines = group.split("\n")

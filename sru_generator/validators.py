@@ -16,7 +16,7 @@ class Validator:
         self.field_name = field_name
         self.required = required
 
-    def validate(self, value: Any, context: Dict[str, Any] = None) -> Any:
+    def validate(self, value: Any, context: Optional[Dict[str, Any]] = None) -> Any:
         """Validate a value and return the cleaned value."""
         if value is None:
             if self.required:
