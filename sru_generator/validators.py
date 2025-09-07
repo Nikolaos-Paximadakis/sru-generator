@@ -139,8 +139,7 @@ class DecimalValidator(Validator):
                 value = Decimal(value)
             except Exception:
                 raise ValidationError(
-                    f"Field '{
-                        self.field_name}' must be a valid decimal number",
+                    f"Field '{self.field_name}' must be a valid decimal number",
                     field=self.field_name,
                     value=value)
 
