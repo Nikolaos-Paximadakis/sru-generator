@@ -74,8 +74,7 @@ class StringValidator(Validator):
             import re
             if not re.match(self.pattern, value):
                 raise ValidationError(
-                    f"Field '{
-                        self.field_name}' does not match required pattern",
+                    f"Field '{self.field_name}' does not match required pattern",
                     field=self.field_name,
                     value=value)
 

@@ -391,13 +391,8 @@ def generate_sru_trade_content(
                 break
 
             # Add new BLANKETT section for each group
-            content_trades += f"{
-                SRU_FIELD_BLANKETT_START.format(
-                    year=str(year))}\n"
-            content_trades += f"{
-                SRU_FIELD_IDENTITET.format(
-                    personal_number=personal_number,
-                    datetime=current_datetime_str)}\n"
+            content_trades += f"{SRU_FIELD_BLANKETT_START.format(year=str(year))}\n"
+            content_trades += f"{SRU_FIELD_IDENTITET.format(personal_number=personal_number, datetime=current_datetime_str)}\n"
             content_trades += f"{SRU_FIELD_NAMN.format(full_name=full_name)}\n"
             content_trades += (
                 f"{SRU_FIELD_UPPGIFT_GROUP_START.format(group_number=group_counter)}\n"
@@ -571,8 +566,7 @@ def read_crypto_sru_content(crypto_file_path: str) -> List[Dict[str, List[str]]]
                 parsed_groups.append(group_data)
 
         logger.info(
-            f"Successfully read {
-                len(parsed_groups)} groups from crypto SRU file"
+            f"Successfully read {len(parsed_groups)} groups from crypto SRU file"
         )
         return parsed_groups
 
