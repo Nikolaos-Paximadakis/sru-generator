@@ -28,26 +28,34 @@ try:
 except ImportError:
     # Fallback if text_converters is not available
     def convert_greek_characters_to_english(text: str) -> str:
+        """Fallback: return text unchanged."""
         return text
 
     def convert_swedish_characters_to_english(text: str) -> str:
+        """Fallback: return text unchanged."""
         return text
 
     def convert_german_characters_to_english(text: str) -> str:
+        """Fallback: return text unchanged."""
         return text
 
     def convert_french_characters_to_english(text: str) -> str:
+        """Fallback: return text unchanged."""
         return text
 
     def convert_spanish_characters_to_english(text: str) -> str:
+        """Fallback: return text unchanged."""
         return text
 
     def no_conversion(text: str) -> str:
+        """Fallback: return text unchanged."""
         return text
 
     CHARACTER_CONVERTERS = {}
 
-    def get_character_converter(converter_name: str):
+    def get_character_converter(converter_name: str):  # pylint: disable=unused-argument
+        """Fallback: return no_conversion function."""
+        # converter_name is ignored in fallback mode
         return no_conversion
 
 # Re-export for backward compatibility
