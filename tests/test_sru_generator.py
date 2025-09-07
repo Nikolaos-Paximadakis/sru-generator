@@ -4,18 +4,16 @@ Tests for SRU Generator package.
 
 import unittest
 from decimal import Decimal
-from sru_generator.sru_generator import (
-    generate_sru_info_content,
-    generate_sru_header,
-    format_trade_item_sru,
-    calculate_group_totals,
-    format_group_totals_sru,
-    generate_sru_trade_content,
-    generate_sru_footer,
-    write_sru_file,
-    MAX_GROUP_NUMBER,
-    MAX_MONETARY_VALUE,
-)
+
+from sru_generator.sru_generator import (MAX_GROUP_NUMBER, MAX_MONETARY_VALUE,
+                                         calculate_group_totals,
+                                         format_group_totals_sru,
+                                         format_trade_item_sru,
+                                         generate_sru_footer,
+                                         generate_sru_header,
+                                         generate_sru_info_content,
+                                         generate_sru_trade_content,
+                                         write_sru_file)
 
 
 class TestSRUGenerator(unittest.TestCase):

@@ -6,16 +6,12 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
-from .sru_generator import (
-    generate_sru_info_content,
-    generate_sru_trade_content,
-    write_sru_file,
-    read_crypto_sru_content,
-    merge_sru_groups,
-)
 from .character_converters import get_character_converter
+from .sru_generator import (generate_sru_info_content,
+                            generate_sru_trade_content, merge_sru_groups,
+                            read_crypto_sru_content, write_sru_file)
 
 
 def load_trade_data(file_path: str) -> List[Dict[str, Any]]:

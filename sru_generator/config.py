@@ -3,8 +3,8 @@ Configuration management for SRU Generator package.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, Callable
 from enum import Enum
+from typing import Any, Callable, Dict, Optional
 
 from .exceptions import ConfigurationError
 

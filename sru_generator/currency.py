@@ -2,9 +2,9 @@
 Currency handling and conversion for SRU Generator package.
 """
 
-from decimal import Decimal, ROUND_HALF_EVEN
-from typing import Dict, Optional, Union
 from dataclasses import dataclass
+from decimal import ROUND_HALF_EVEN, Decimal
+from typing import Dict, Optional, Union
 
 from .exceptions import CurrencyError, ValidationError
 

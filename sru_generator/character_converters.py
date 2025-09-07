@@ -15,16 +15,13 @@ if text_converters_path not in sys.path:
 
 # Import from the shared text_converters package
 try:
-    from character_converters import (
-        convert_greek_characters_to_english,
-        convert_swedish_characters_to_english,
-        convert_german_characters_to_english,
-        convert_french_characters_to_english,
-        convert_spanish_characters_to_english,
-        no_conversion,
-        CHARACTER_CONVERTERS,
-        get_character_converter,
-    )
+    from character_converters import (CHARACTER_CONVERTERS,
+                                      convert_french_characters_to_english,
+                                      convert_german_characters_to_english,
+                                      convert_greek_characters_to_english,
+                                      convert_spanish_characters_to_english,
+                                      convert_swedish_characters_to_english,
+                                      get_character_converter, no_conversion)
 except ImportError:
     # Fallback if text_converters is not available
     def convert_greek_characters_to_english(text: str) -> str:

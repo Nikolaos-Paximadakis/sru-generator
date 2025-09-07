@@ -5,10 +5,10 @@ This module provides all the core functionality for generating SRU files
 according to Swedish tax authority specifications.
 """
 
+import os
 from datetime import datetime
 from decimal import ROUND_HALF_EVEN, Decimal
-import os
-from typing import Any, List, Dict
+from typing import Any, Dict, List
 
 from .utils import setup_logger
 
