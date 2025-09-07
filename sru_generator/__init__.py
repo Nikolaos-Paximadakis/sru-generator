@@ -54,7 +54,10 @@ from .character_converters import (
 
 # Enhanced features
 from .config import SRUConfig, DEFAULT_CONFIG, get_default_config, create_config
-from .currency import CurrencyConverter, CurrencyAmount, convert_currency, convert_to_sek, set_exchange_rate, get_currency_converter
+from .currency import (
+    CurrencyConverter, CurrencyAmount, convert_currency, convert_to_sek,
+    set_exchange_rate, get_currency_converter
+)
 from .validators import validate_trade_data, validate_personal_info, TradeDataValidator
 from .exceptions import (
     SRUGeneratorError,
