@@ -57,7 +57,7 @@ pip install sru-generator
 
 ### From source
 ```bash
-git clone https://github.com/yourusername/sru-generator.git
+git clone https://github.com/Nikolaos-Paximadakis/sru-generator.git
 cd sru-generator
 pip install -e .
 ```
@@ -553,7 +553,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Support
 
-For questions, issues, or contributions, please visit the [GitHub repository](https://github.com/yourusername/sru-generator).
+For questions, issues, or contributions, please visit the [GitHub repository](https://github.com/Nikolaos-Paximadakis/sru-generator).
 
 ## Changelog
 
