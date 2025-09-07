@@ -23,7 +23,7 @@ class Validator:
                 raise ValidationError(
                     f"Field '{self.field_name}' is required",
                     field=self.field_name,
-                    value=value
+                    value=value,
                 )
             return None
 
@@ -38,12 +38,13 @@ class StringValidator(Validator):
     """Validates string values."""
 
     def __init__(
-            self,
-            field_name: str,
-            max_length: Optional[int] = None,
-            min_length: Optional[int] = None,
-            pattern: Optional[str] = None,
-            required: bool = True):
+        self,
+        field_name: str,
+        max_length: Optional[int] = None,
+        min_length: Optional[int] = None,
+        pattern: Optional[str] = None,
+        required: bool = True,
+    ):
         super().__init__(field_name, required)
         self.max_length = max_length
         self.min_length = min_length
@@ -55,28 +56,33 @@ class StringValidator(Validator):
                 f"Field '{self.field_name}' must be a string, got "
                 f"{type(value).__name__}",
                 field=self.field_name,
-                value=value)
+                value=value,
+            )
 
         if self.min_length and len(value) < self.min_length:
             raise ValidationError(
                 f"Field '{self.field_name}' must be at least "
                 f"{self.min_length} characters",
                 field=self.field_name,
-                value=value)
+                value=value,
+            )
 
         if self.max_length and len(value) > self.max_length:
             raise ValidationError(
                 f"Field '{self.field_name}' must be at most {self.max_length} characters",
                 field=self.field_name,
-                value=value)
+                value=value,
+            )
 
         if self.pattern:
             import re
+
             if not re.match(self.pattern, value):
                 raise ValidationError(
                     f"Field '{self.field_name}' does not match required pattern",
                     field=self.field_name,
-                    value=value)
+                    value=value,
+                )
 
         return value.strip()
 
@@ -84,8 +90,13 @@ class StringValidator(Validator):
 class IntegerValidator(Validator):
     """Validates integer values."""
 
-    def __init__(self, field_name: str, min_value: Optional[int] = None,
-                 max_value: Optional[int] = None, required: bool = True):
+    def __init__(
+        self,
+        field_name: str,
+        min_value: Optional[int] = None,
+        max_value: Optional[int] = None,
+        required: bool = True,
+    ):
         super().__init__(field_name, required)
         self.min_value = min_value
         self.max_value = max_value
@@ -98,27 +109,28 @@ class IntegerValidator(Validator):
                 raise ValidationError(
                     f"Field '{self.field_name}' must be a valid integer",
                     field=self.field_name,
-                    value=value
+                    value=value,
                 )
 
         if not isinstance(value, int):
             raise ValidationError(
                 f"Field '{self.field_name}' must be an integer, got {type(value).__name__}",
                 field=self.field_name,
-                value=value)
+                value=value,
+            )
 
         if self.min_value is not None and value < self.min_value:
             raise ValidationError(
                 f"Field '{self.field_name}' must be at least {self.min_value}",
                 field=self.field_name,
-                value=value
+                value=value,
             )
 
         if self.max_value is not None and value > self.max_value:
             raise ValidationError(
                 f"Field '{self.field_name}' must be at most {self.max_value}",
                 field=self.field_name,
-                value=value
+                value=value,
             )
 
         return value
@@ -127,8 +139,13 @@ class IntegerValidator(Validator):
 class DecimalValidator(Validator):
     """Validates decimal values."""
 
-    def __init__(self, field_name: str, min_value: Optional[Decimal] = None,
-                 max_value: Optional[Decimal] = None, required: bool = True):
+    def __init__(
+        self,
+        field_name: str,
+        min_value: Optional[Decimal] = None,
+        max_value: Optional[Decimal] = None,
+        required: bool = True,
+    ):
         super().__init__(field_name, required)
         self.min_value = min_value
         self.max_value = max_value
@@ -141,7 +158,8 @@ class DecimalValidator(Validator):
                 raise ValidationError(
                     f"Field '{self.field_name}' must be a valid decimal number",
                     field=self.field_name,
-                    value=value)
+                    value=value,
+                )
 
         if isinstance(value, (int, float)):
             value = Decimal(str(value))
@@ -150,20 +168,21 @@ class DecimalValidator(Validator):
             raise ValidationError(
                 f"Field '{self.field_name}' must be a decimal number, got {type(value).__name__}",
                 field=self.field_name,
-                value=value)
+                value=value,
+            )
 
         if self.min_value is not None and value < self.min_value:
             raise ValidationError(
                 f"Field '{self.field_name}' must be at least {self.min_value}",
                 field=self.field_name,
-                value=value
+                value=value,
             )
 
         if self.max_value is not None and value > self.max_value:
             raise ValidationError(
                 f"Field '{self.field_name}' must be at most {self.max_value}",
                 field=self.field_name,
-                value=value
+                value=value,
             )
 
         return value
@@ -177,7 +196,7 @@ class CurrencyValidator(Validator):
             raise ValidationError(
                 f"Field '{self.field_name}' must be a string",
                 field=self.field_name,
-                value=value
+                value=value,
             )
 
         currency = value.upper()
@@ -187,7 +206,7 @@ class CurrencyValidator(Validator):
                 f"Field '{self.field_name}' must be a supported currency. "
                 f"Supported currencies: {supported}",
                 field=self.field_name,
-                value=value
+                value=value,
             )
 
         return currency
@@ -204,46 +223,34 @@ class TradeDataValidator:
         """Create validators for trade data fields."""
         return {
             "quantity": IntegerValidator(
-                "quantity",
-                min_value=0,
-                max_value=999999999999
+                "quantity", min_value=0, max_value=999999999999
             ),
-            "stock": StringValidator(
-                "stock",
-                max_length=80,
-                min_length=1
-            ),
+            "stock": StringValidator("stock", max_length=80, min_length=1),
             "net value": DecimalValidator(
-                "net value",
-                min_value=Decimal("0"),
-                max_value=Decimal("999999999999")
+                "net value", min_value=Decimal("0"), max_value=Decimal("999999999999")
             ),
             "total net value of purchase": DecimalValidator(
                 "total net value of purchase",
                 min_value=Decimal("0"),
-                max_value=Decimal("999999999999")
+                max_value=Decimal("999999999999"),
             ),
-            "profit/loss": DecimalValidator(
-                "profit/loss",
-                required=False
-            ),
+            "profit/loss": DecimalValidator("profit/loss", required=False),
             "currency": CurrencyValidator("currency", required=False),
             "exchange_rate": DecimalValidator(
                 "exchange_rate",
                 min_value=Decimal("0.000001"),
                 max_value=Decimal("1000000"),
-                required=False
-            )
+                required=False,
+            ),
         }
 
-    def validate_trade_item(
-            self, trade_item: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_trade_item(self, trade_item: Dict[str, Any]) -> Dict[str, Any]:
         """Validate a single trade item."""
         if not isinstance(trade_item, dict):
             raise DataFormatError(
                 "Trade item must be a dictionary",
                 expected_format="dict",
-                actual_format=type(trade_item).__name__
+                actual_format=type(trade_item).__name__,
             )
 
         validated_item = {}
@@ -280,8 +287,8 @@ class TradeDataValidator:
                             "net_value": net_value,
                             "cost_basis": cost_basis,
                             "calculated_profit_loss": calculated_profit_loss,
-                            "provided_profit_loss": profit_loss
-                        }
+                            "provided_profit_loss": profit_loss,
+                        },
                     )
             else:
                 # Auto-calculate if not provided
@@ -293,17 +300,18 @@ class TradeDataValidator:
             raise BusinessRuleError(
                 f"Unsupported currency: {currency}",
                 rule="currency_support",
-                context={"currency": currency}
+                context={"currency": currency},
             )
 
     def validate_trade_data(
-            self, trade_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        self, trade_data: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Validate a list of trade items."""
         if not isinstance(trade_data, list):
             raise DataFormatError(
                 "Trade data must be a list",
                 expected_format="list",
-                actual_format=type(trade_data).__name__
+                actual_format=type(trade_data).__name__,
             )
 
         if not trade_data:
@@ -318,7 +326,7 @@ class TradeDataValidator:
                 raise ValidationError(
                     f"Validation failed for trade item {i}: {e}",
                     field=f"trade_data[{i}]",
-                    value=trade_item
+                    value=trade_item,
                 ) from e
 
         return validated_data
@@ -330,37 +338,26 @@ class PersonalInfoValidator:
     def __init__(self):
         self.validators = {
             "personal_number": StringValidator(
-                "personal_number",
-                pattern=r"^\d{10,12}$",
-                required=True
+                "personal_number", pattern=r"^\d{10,12}$", required=True
             ),
             "full_name": StringValidator(
-                "full_name",
-                max_length=100,
-                min_length=1,
-                required=True
+                "full_name", max_length=100, min_length=1, required=True
             ),
             "postal_code": StringValidator(
-                "postal_code",
-                pattern=r"^\d{5}$",
-                required=True
+                "postal_code", pattern=r"^\d{5}$", required=True
             ),
             "city_name": StringValidator(
-                "city_name",
-                max_length=50,
-                min_length=1,
-                required=True
-            )
+                "city_name", max_length=50, min_length=1, required=True
+            ),
         }
 
-    def validate_personal_info(
-            self, personal_info: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_personal_info(self, personal_info: Dict[str, Any]) -> Dict[str, Any]:
         """Validate personal information."""
         if not isinstance(personal_info, dict):
             raise DataFormatError(
                 "Personal info must be a dictionary",
                 expected_format="dict",
-                actual_format=type(personal_info).__name__
+                actual_format=type(personal_info).__name__,
             )
 
         validated_info = {}
@@ -376,8 +373,7 @@ _trade_validator = TradeDataValidator()
 _personal_validator = PersonalInfoValidator()
 
 
-def validate_trade_data(
-        trade_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def validate_trade_data(trade_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Validate trade data using the global validator."""
     return _trade_validator.validate_trade_data(trade_data)
 
@@ -387,9 +383,9 @@ def validate_personal_info(personal_info: Dict[str, Any]) -> Dict[str, Any]:
     return _personal_validator.validate_personal_info(personal_info)
 
 
-def create_custom_validator(field_name: str,
-                            validator_func: Callable) -> Validator:
+def create_custom_validator(field_name: str, validator_func: Callable) -> Validator:
     """Create a custom validator."""
+
     class CustomValidator(Validator):
         def _validate_value(self, value: Any, context: Dict[str, Any]) -> Any:
             return validator_func(value, context)

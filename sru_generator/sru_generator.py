@@ -203,7 +203,10 @@ def format_trade_item_sru(
         elif difference > 0:
             logger.info(
                 "Small profit/loss difference for '%s': calculated=%s, data=%s. Difference=%s. Using data value for SRU.",
-                stock_name, calculated_profit_loss, profit_loss_from_data, difference
+                stock_name,
+                calculated_profit_loss,
+                profit_loss_from_data,
+                difference,
             )
 
         base_code = 3100 + (item_index_in_group * 10)
@@ -267,19 +270,23 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
             if amount_sold_for < 0 or amount_sold_for > MAX_MONETARY_VALUE:
                 logger.error(
                     "Invalid sale price %s in group totals. Must be between 0 and %s. Using 0.",
-                    amount_sold_for, MAX_MONETARY_VALUE
+                    amount_sold_for,
+                    MAX_MONETARY_VALUE,
                 )
                 amount_sold_for = 0
             if cost_basis < 0 or cost_basis > MAX_MONETARY_VALUE:
                 logger.error(
                     "Invalid cost basis %s in group totals. Must be between 0 and %s. Using 0.",
-                    cost_basis, MAX_MONETARY_VALUE
+                    cost_basis,
+                    MAX_MONETARY_VALUE,
                 )
                 cost_basis = 0
             if abs(item_pl_from_data) > MAX_MONETARY_VALUE:
                 logger.error(
                     "Invalid profit/loss %s in group totals. Must be between -%s and %s. Using 0.",
-                    item_pl_from_data, MAX_MONETARY_VALUE, MAX_MONETARY_VALUE
+                    item_pl_from_data,
+                    MAX_MONETARY_VALUE,
+                    MAX_MONETARY_VALUE,
                 )
                 item_pl_from_data = 0
 
@@ -287,7 +294,7 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
             if group_total_amount_sold + amount_sold_for > MAX_MONETARY_VALUE:
                 logger.error(
                     "Group total sale price would exceed maximum allowed value (%s). Truncating to maximum.",
-                    MAX_MONETARY_VALUE
+                    MAX_MONETARY_VALUE,
                 )
                 group_total_amount_sold = MAX_MONETARY_VALUE
             else:
@@ -296,7 +303,7 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
             if group_total_cost_basis + cost_basis > MAX_MONETARY_VALUE:
                 logger.error(
                     "Group total cost basis would exceed maximum allowed value (%s). Truncating to maximum.",
-                    MAX_MONETARY_VALUE
+                    MAX_MONETARY_VALUE,
                 )
                 group_total_cost_basis = MAX_MONETARY_VALUE
             else:
@@ -307,7 +314,7 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
                 if current_group_total_profit + item_pl_from_data > MAX_MONETARY_VALUE:
                     logger.error(
                         "Group total profit would exceed maximum allowed value (%s). Truncating to maximum.",
-                        MAX_MONETARY_VALUE
+                        MAX_MONETARY_VALUE,
                     )
                     current_group_total_profit = MAX_MONETARY_VALUE
                 else:
@@ -317,7 +324,7 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
                 if current_group_total_loss + loss_amount > MAX_MONETARY_VALUE:
                     logger.error(
                         "Group total loss would exceed maximum allowed value (%s). Truncating to maximum.",
-                        MAX_MONETARY_VALUE
+                        MAX_MONETARY_VALUE,
                     )
                     current_group_total_loss = MAX_MONETARY_VALUE
                 else:
@@ -394,7 +401,7 @@ def generate_sru_trade_content(
             if group_counter > MAX_GROUP_NUMBER:
                 logger.error(
                     "Maximum number of groups (%s) exceeded. Cannot generate more groups.",
-                    MAX_GROUP_NUMBER
+                    MAX_GROUP_NUMBER,
                 )
                 break
 

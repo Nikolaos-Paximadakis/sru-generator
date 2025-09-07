@@ -8,7 +8,7 @@ import sys
 
 # Add the text_converters package to the path
 text_converters_path = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), '..', 'text_converters'
+    os.path.dirname(os.path.dirname(__file__)), "..", "text_converters"
 )
 if text_converters_path not in sys.path:
     sys.path.insert(0, text_converters_path)
@@ -57,6 +57,7 @@ except ImportError:
         """Fallback: return no_conversion function."""
         # converter_name is ignored in fallback mode
         return no_conversion
+
 
 # Re-export for backward compatibility
 __all__ = [

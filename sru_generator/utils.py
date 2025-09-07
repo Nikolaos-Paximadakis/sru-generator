@@ -5,8 +5,9 @@ Utility functions for the SRU Generator package.
 import logging
 
 
-def setup_logger(name: str = "sru_generator",
-                 level: int = logging.INFO) -> logging.Logger:
+def setup_logger(
+    name: str = "sru_generator", level: int = logging.INFO
+) -> logging.Logger:
     """
     Set up a logger for the SRU generator.
 

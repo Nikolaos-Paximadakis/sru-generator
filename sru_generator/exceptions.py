@@ -5,6 +5,7 @@ Custom exceptions for SRU Generator package.
 
 class SRUGeneratorError(Exception):
     """Base exception for all SRU Generator errors."""
+
     pass
 
 
@@ -21,10 +22,8 @@ class DataFormatError(SRUGeneratorError):
     """Raised when data format is invalid."""
 
     def __init__(
-            self,
-            message: str,
-            expected_format: str = None,
-            actual_format: str = None):
+        self, message: str, expected_format: str = None, actual_format: str = None
+    ):
         super().__init__(message)
         self.expected_format = expected_format
         self.actual_format = actual_format
@@ -42,11 +41,7 @@ class BusinessRuleError(SRUGeneratorError):
 class CurrencyError(SRUGeneratorError):
     """Raised when currency operations fail."""
 
-    def __init__(
-            self,
-            message: str,
-            currency: str = None,
-            exchange_rate: float = None):
+    def __init__(self, message: str, currency: str = None, exchange_rate: float = None):
         super().__init__(message)
         self.currency = currency
         self.exchange_rate = exchange_rate
@@ -55,11 +50,7 @@ class CurrencyError(SRUGeneratorError):
 class ConfigurationError(SRUGeneratorError):
     """Raised when configuration is invalid."""
 
-    def __init__(
-            self,
-            message: str,
-            config_key: str = None,
-            config_value: any = None):
+    def __init__(self, message: str, config_key: str = None, config_value: any = None):
         super().__init__(message)
         self.config_key = config_key
         self.config_value = config_value
@@ -68,11 +59,7 @@ class ConfigurationError(SRUGeneratorError):
 class FileOperationError(SRUGeneratorError):
     """Raised when file operations fail."""
 
-    def __init__(
-            self,
-            message: str,
-            file_path: str = None,
-            operation: str = None):
+    def __init__(self, message: str, file_path: str = None, operation: str = None):
         super().__init__(message)
         self.file_path = file_path
         self.operation = operation
