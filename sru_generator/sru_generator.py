@@ -437,7 +437,7 @@ def generate_sru_footer() -> str:
 
 def merge_sru_groups(
     stock_content: str,
-    crypto_groups: List[Dict[str, List[str]]],
+    crypto_groups: List[Dict[str, Any]],
     full_name: str,
     personal_number: str,
     year: int = 2024,

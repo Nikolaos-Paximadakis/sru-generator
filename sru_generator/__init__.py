@@ -6,6 +6,7 @@ including support for stock trades, crypto transactions, and proper formatting
 according to Swedish tax authority specifications.
 """
 
+from .builders import build_blanketter_sru, build_info_sru, encode_sru_content
 from .character_converters import (
     CHARACTER_CONVERTERS,
     convert_french_characters_to_english,
@@ -36,6 +37,7 @@ from .exceptions import (
     SRUGeneratorError,
     ValidationError,
 )
+from .models import CryptoSRUGroup, PersonalInfo, SRUTradeRow
 from .sru_generator import MAX_MONETARY_VALUE  # Constants
 from .sru_generator import (
     MAX_GROUP_NUMBER,
@@ -71,11 +73,14 @@ from .sru_generator import (
 )
 from .validators import TradeDataValidator, validate_personal_info, validate_trade_data
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __author__ = "Your Name"
 __email__ = "your.email@example.com"
 
 __all__ = [
+    "build_info_sru",
+    "build_blanketter_sru",
+    "encode_sru_content",
     # Main functions
     "generate_sru_info_content",
     "generate_sru_header",
@@ -87,6 +92,9 @@ __all__ = [
     "merge_sru_groups",
     "write_sru_file",
     "read_crypto_sru_content",
+    "PersonalInfo",
+    "SRUTradeRow",
+    "CryptoSRUGroup",
     # Character converters
     "convert_greek_characters_to_english",
     "convert_swedish_characters_to_english",
