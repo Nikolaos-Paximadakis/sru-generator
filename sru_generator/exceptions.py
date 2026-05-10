@@ -2,6 +2,8 @@
 Custom exceptions for SRU Generator package.
 """
 
+from typing import Any, Dict, Optional
+
 
 class SRUGeneratorError(Exception):
     """Base exception for all SRU Generator errors."""
@@ -12,7 +14,7 @@ class SRUGeneratorError(Exception):
 class ValidationError(SRUGeneratorError):
     """Raised when data validation fails."""
 
-    def __init__(self, message: str, field: str = None, value: any = None):
+    def __init__(self, message: str, field: Optional[str] = None, value: Any = None):
         super().__init__(message)
         self.field = field
         self.value = value
@@ -22,7 +24,10 @@ class DataFormatError(SRUGeneratorError):
     """Raised when data format is invalid."""
 
     def __init__(
-        self, message: str, expected_format: str = None, actual_format: str = None
+        self,
+        message: str,
+        expected_format: Optional[str] = None,
+        actual_format: Optional[str] = None,
     ):
         super().__init__(message)
         self.expected_format = expected_format
@@ -32,7 +37,12 @@ class DataFormatError(SRUGeneratorError):
 class BusinessRuleError(SRUGeneratorError):
     """Raised when business rules are violated."""
 
-    def __init__(self, message: str, rule: str = None, context: dict = None):
+    def __init__(
+        self,
+        message: str,
+        rule: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ):
         super().__init__(message)
         self.rule = rule
         self.context = context or {}
@@ -41,7 +51,12 @@ class BusinessRuleError(SRUGeneratorError):
 class CurrencyError(SRUGeneratorError):
     """Raised when currency operations fail."""
 
-    def __init__(self, message: str, currency: str = None, exchange_rate: float = None):
+    def __init__(
+        self,
+        message: str,
+        currency: Optional[str] = None,
+        exchange_rate: Optional[float] = None,
+    ):
         super().__init__(message)
         self.currency = currency
         self.exchange_rate = exchange_rate
@@ -50,7 +65,9 @@ class CurrencyError(SRUGeneratorError):
 class ConfigurationError(SRUGeneratorError):
     """Raised when configuration is invalid."""
 
-    def __init__(self, message: str, config_key: str = None, config_value: any = None):
+    def __init__(
+        self, message: str, config_key: Optional[str] = None, config_value: Any = None
+    ):
         super().__init__(message)
         self.config_key = config_key
         self.config_value = config_value
@@ -59,7 +76,12 @@ class ConfigurationError(SRUGeneratorError):
 class FileOperationError(SRUGeneratorError):
     """Raised when file operations fail."""
 
-    def __init__(self, message: str, file_path: str = None, operation: str = None):
+    def __init__(
+        self,
+        message: str,
+        file_path: Optional[str] = None,
+        operation: Optional[str] = None,
+    ):
         super().__init__(message)
         self.file_path = file_path
         self.operation = operation

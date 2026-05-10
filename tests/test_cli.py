@@ -99,7 +99,11 @@ def test_main_trades_command_merges_crypto_when_file_exists(
     crypto_path.write_text("dummy", encoding="utf-8")
     written: dict[str, str] = {}
 
-    monkeypatch.setattr(cli, "read_crypto_sru_content", lambda path: [{"group_number": 1, "uppgifter": ["#UPPGIFT 3410 1"]}])
+    monkeypatch.setattr(
+        cli,
+        "read_crypto_sru_content",
+        lambda path: [{"group_number": 1, "uppgifter": ["#UPPGIFT 3410 1"]}],
+    )
     monkeypatch.setattr(
         cli,
         "merge_sru_groups",
@@ -111,7 +115,10 @@ def test_main_trades_command_merges_crypto_when_file_exists(
     monkeypatch.setattr(
         cli,
         "write_sru_file",
-        lambda file_path, content: written.update({"path": file_path, "content": content}) or True,
+        lambda file_path, content: written.update(
+            {"path": file_path, "content": content}
+        )
+        or True,
     )
     monkeypatch.setattr(
         "sys.argv",

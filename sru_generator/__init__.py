@@ -6,6 +6,7 @@ including support for stock trades, crypto transactions, and proper formatting
 according to Swedish tax authority specifications.
 """
 
+from .builders import build_blanketter_sru, build_info_sru, encode_sru_content
 from .character_converters import (
     CHARACTER_CONVERTERS,
     convert_french_characters_to_english,
@@ -16,7 +17,6 @@ from .character_converters import (
     get_character_converter,
     no_conversion,
 )
-from .builders import build_blanketter_sru, build_info_sru, encode_sru_content
 
 # Enhanced features
 from .config import DEFAULT_CONFIG, SRUConfig, create_config, get_default_config
