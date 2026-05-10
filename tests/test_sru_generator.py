@@ -5,6 +5,7 @@ Tests for SRU Generator package.
 import unittest
 from decimal import Decimal
 
+from sru_generator import build_blanketter_sru, build_info_sru
 from sru_generator.sru_generator import (
     MAX_GROUP_NUMBER,
     MAX_MONETARY_VALUE,
@@ -38,6 +39,19 @@ class TestSRUGenerator(unittest.TestCase):
         self.assertIn("12345", content)
         self.assertIn("Stockholm", content)
         self.assertIn("#MEDIELEV_SLUT", content)
+
+    def test_build_info_sru(self):
+        content = build_info_sru(
+            {
+                "personal_number": "1234567890",
+                "full_name": "John Doe",
+                "postal_code": "12345",
+                "city_name": "Stockholm",
+            }
+        )
+
+        self.assertIn("#ORGNR 1234567890", content)
+        self.assertIn("#NAMN John Doe", content)
 
     def test_generate_sru_header(self):
         """Test SRU header generation."""
@@ -147,6 +161,30 @@ class TestSRUGenerator(unittest.TestCase):
         self.assertIn("#NAMN John Doe", content)
         self.assertIn("#UPPGIFT 7014 1", content)  # Group number
         self.assertIn("#BLANKETTSLUT", content)
+
+    def test_build_blanketter_sru(self):
+        content = build_blanketter_sru(
+            trade_rows=[
+                {
+                    "quantity": 100,
+                    "stock": "Apple Inc",
+                    "net value": 15000.00,
+                    "total net value of purchase": 14000.00,
+                    "profit/loss": 1000.00,
+                }
+            ],
+            personal_info={
+                "personal_number": "1234567890",
+                "full_name": "John Doe",
+                "postal_code": "12345",
+                "city_name": "Stockholm",
+            },
+            year=2024,
+        )
+
+        self.assertIn("#BLANKETT K4-2024P4", content)
+        self.assertIn("#UPPGIFT 3100 100", content)
+        self.assertTrue(content.endswith("#FIL_SLUT\n"))
 
     def test_generate_sru_footer(self):
         """Test SRU footer generation."""

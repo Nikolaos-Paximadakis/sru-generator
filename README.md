@@ -12,6 +12,8 @@ A Python package for generating Swedish SRU (Skatteverket) files for tax reporti
 
 The SRU Generator package provides functionality to create SRU files that comply with Swedish tax authority (Skatteverket) specifications. It supports generating files for stock trades, crypto transactions, and other financial instruments that need to be reported to Swedish tax authorities.
 
+The package is intentionally generic. It owns SRU formatting, validation, crypto merge handling, and high-level SRU content builders. Application-specific concerns such as broker selection, database reads, taxpayer-profile storage, and sell-report sourcing should stay in the consuming application.
+
 ## ⚠️ Important Disclaimer
 
 **This software is provided for EDUCATIONAL and RESEARCH purposes only.** It is NOT intended for use in preparing official tax returns without proper verification and professional review.
@@ -34,6 +36,7 @@ The SRU Generator package provides functionality to create SRU files that comply
 ### Core Features
 - Generate SRU info files with personal information
 - Create SRU trade content for stock transactions
+- Build complete `info.sru` and `blanketter.sru` content from generic input data
 - Support for crypto transaction reporting
 - Automatic grouping of transactions according to SRU specifications
 - Greek character conversion to English equivalents
@@ -62,12 +65,22 @@ cd sru-generator
 pip install -e .
 ```
 
+### Local workspace dependency
+
+If another local project depends on `sru_generator`, install it as an editable local dependency:
+
+```bash
+pip install -e /path/to/sru_generator
+```
+
 ## Quick Start
 
 ### Basic Usage
 
 ```python
 from sru_generator import (
+    build_blanketter_sru,
+    build_info_sru,
     generate_sru_info_content,
     generate_sru_trade_content,
     write_sru_file
@@ -102,6 +115,37 @@ trade_content = generate_sru_trade_content(
 # Write to file
 write_sru_file("output.sru", trade_content)
 ```
+
+### High-Level Builders
+
+If your application already has normalized taxpayer data and sell rows, use the
+high-level builders instead of assembling SRU content manually:
+
+```python
+from sru_generator import build_blanketter_sru, build_info_sru
+
+personal_info = {
+    "personal_number": "1234567890",
+    "full_name": "John Doe",
+    "postal_code": "12345",
+    "city_name": "Stockholm",
+}
+
+trade_rows = [
+    {
+        "quantity": 100,
+        "stock": "Apple Inc",
+        "net value": 15000.00,
+        "total net value of purchase": 14000.00,
+        "profit/loss": 1000.00,
+    }
+]
+
+info_content = build_info_sru(personal_info)
+blanketter_content = build_blanketter_sru(trade_rows, personal_info, year=2024)
+```
+
+This split is how Mihalis now uses the package: Mihalis computes SEK sell rows and loads taxpayer profile data locally, then hands generic rows into `build_blanketter_sru(...)`.
 
 ### Advanced Usage with Crypto
 
@@ -466,6 +510,9 @@ print("✅ SRU file generated successfully!")
 
 ### Core Functions
 
+- `build_info_sru()`: Build a complete `info.sru` content string
+- `build_blanketter_sru()`: Build a complete `blanketter.sru` content string
+- `encode_sru_content()`: Encode generated SRU content for file responses or writes
 - `generate_sru_info_content()`: Generate SRU info file content
 - `generate_sru_trade_content()`: Generate SRU trade content
 - `merge_sru_groups()`: Merge stock and crypto groups

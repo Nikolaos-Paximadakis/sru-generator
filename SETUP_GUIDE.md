@@ -1,15 +1,15 @@
 # SRU Generator - Setup Guide
 
 ## Project Structure
-This is now a **separate, independent project** with its own source control.
+This is a **separate, independent project** with its own package metadata and tests.
 
-**Location**: `E:\Python\sru-generator\`
+**Current workspace location**: `d:\Python\Mihalis_workspace\sru_generator\`
 
 ## Quick Start
 
 ### 1. Install the Package
 ```bash
-cd E:\Python\sru-generator
+cd d:\Python\Mihalis_workspace\sru_generator
 pip install -e .
 ```
 
@@ -84,10 +84,25 @@ Once published to PyPI, other projects can install it with:
 pip install sru-generator
 ```
 
-Or for development:
+Or for local development:
 ```bash
-pip install -e E:\Python\sru-generator
+pip install -e d:\Python\Mihalis_workspace\sru_generator
 ```
+
+## Integration Boundary
+
+Keep `sru_generator` generic:
+
+- owns SRU content generation
+- owns SRU validation and merge behavior
+- owns high-level builders such as `build_info_sru(...)` and `build_blanketter_sru(...)`
+
+Do not move application-specific concerns into this package:
+
+- broker lookup logic
+- database access
+- local config-file discovery
+- application-specific storage conventions
 
 ## Project Benefits
 
