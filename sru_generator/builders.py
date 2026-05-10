@@ -2,7 +2,7 @@
 High-level helpers for building complete SRU file contents.
 """
 
-from typing import Iterable, Sequence
+from typing import Iterable, Optional, Sequence
 
 from .models import CryptoSRUGroup, PersonalInfo, SRUTradeRow
 from .sru_generator import (
@@ -30,7 +30,7 @@ def build_blanketter_sru(
     trade_rows: Sequence[SRUTradeRow],
     personal_info: PersonalInfo,
     year: int,
-    crypto_groups: Iterable[CryptoSRUGroup] | None = None,
+    crypto_groups: Optional[Iterable[CryptoSRUGroup]] = None,
     *,
     items_per_group: int = 9,
     character_converter=None,
