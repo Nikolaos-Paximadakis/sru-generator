@@ -10,22 +10,22 @@ This is a **separate, independent project** with its own package metadata and te
 ### 1. Install the Package
 ```bash
 cd d:\Python\Mihalis_workspace\sru_generator
-pip install -e .
+uv sync --group dev
 ```
 
 ### 2. Test Installation
 ```bash
-python -c "from sru_generator import generate_sru_info_content; print('Package installed successfully!')"
+uv run python -c "from sru_generator import generate_sru_info_content; print('Package installed successfully!')"
 ```
 
 ### 3. Run Tests
 ```bash
-python -m pytest tests/ -v
+uv run pytest tests/ -v
 ```
 
 ### 4. Try CLI
 ```bash
-python -m sru_generator.cli --help
+uv run python -m sru_generator.cli --help
 ```
 
 ## Development Setup
@@ -50,7 +50,7 @@ git commit -m "Initial commit: SRU Generator package"
 ```bash
 # Make changes
 # Test changes
-python -m pytest tests/ -v
+uv run pytest tests/ -v
 
 # Commit changes
 git add .
@@ -62,19 +62,14 @@ git push origin main
 
 ## Publishing to PyPI
 
-### 1. Install Build Tools
+### 1. Build Package
 ```bash
-pip install build twine
+uv build
 ```
 
-### 2. Build Package
+### 2. Upload to PyPI
 ```bash
-python -m build
-```
-
-### 3. Upload to PyPI
-```bash
-twine upload dist/*
+uv run twine upload dist/*
 ```
 
 ## Usage in Other Projects
@@ -86,7 +81,7 @@ pip install sru-generator
 
 Or for local development:
 ```bash
-pip install -e d:\Python\Mihalis_workspace\sru_generator
+uv pip install -e d:\Python\Mihalis_workspace\sru_generator
 ```
 
 ## Integration Boundary

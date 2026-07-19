@@ -33,6 +33,18 @@ sru-generator = "sru_generator.cli:main"
 [tool.setuptools]
 packages = ["sru_generator"]
 
+[dependency-groups]
+dev = [
+  "pytest>=6.0",
+  "pytest-cov>=2.0",
+  "black>=21.0",
+  "flake8>=3.8",
+  "isort>=5.0",
+  "mypy>=0.800",
+  "build",
+  "twine",
+]
+
 [tool.black]
 line-length = 88
 target-version = ['py38', 'py39', 'py310', 'py311']

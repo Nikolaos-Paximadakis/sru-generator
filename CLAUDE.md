@@ -8,20 +8,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Common Commands
 
+Dependency management and running tools is done via [uv](https://docs.astral.sh/uv/); there is no `requirements.txt`, `setup.py`, or manual venv activation.
+
 ```bash
-pip install -e .                                          # Install in editable mode
-pytest tests/ -v --cov=sru_generator                     # Run all tests with coverage
-pytest tests/test_sru_generator.py::TestSRUGenerator -v  # Run a single test class
-pytest tests/test_enhanced_features.py::TestValidation -v
-flake8 sru_generator/ tests/
-black --check sru_generator/ tests/
-isort --check-only sru_generator/ tests/
-mypy sru_generator/ --ignore-missing-imports
-python -m build                                           # Build distribution packages
-twine check dist/*                                        # Validate built packages
+uv sync --group dev                                          # Install package + dev deps (creates .venv, writes uv.lock)
+uv run pytest tests/ -v --cov=sru_generator                  # Run all tests with coverage
+uv run pytest tests/test_sru_generator.py::TestSRUGenerator -v  # Run a single test class
+uv run pytest tests/test_enhanced_features.py::TestValidation -v
+uv run flake8 sru_generator/ tests/
+uv run black --check sru_generator/ tests/
+uv run isort --check-only sru_generator/ tests/
+uv run mypy sru_generator/ --ignore-missing-imports
+uv build                                                      # Build distribution packages
+uv run twine check dist/*                                     # Validate built packages
 ```
 
-CLI entry point (defined in `setup.py`): `sru-generator info ...` and `sru-generator trades ...`.
+CLI entry point (defined in `pyproject.toml` under `[project.scripts]`): `sru-generator info ...` and `sru-generator trades ...`.
 
 Note: the CI flake8 step runs with `--select=E9,F63,F7,F82` (fatal errors only, not style). Full style checks are done via black/isort.
 

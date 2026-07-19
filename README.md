@@ -58,11 +58,11 @@ The package is intentionally generic. It owns SRU formatting, validation, crypto
 pip install sru-generator
 ```
 
-### From source
+### From source (development)
 ```bash
 git clone https://github.com/Nikolaos-Paximadakis/sru-generator.git
 cd sru-generator
-pip install -e .
+uv sync --group dev
 ```
 
 ### Local workspace dependency
@@ -70,7 +70,7 @@ pip install -e .
 If another local project depends on `sru_generator`, install it as an editable local dependency:
 
 ```bash
-pip install -e /path/to/sru_generator
+uv pip install -e /path/to/sru_generator
 ```
 
 ## Quick Start
@@ -591,7 +591,7 @@ sru-generator trades --data "trades.json" --personal-number "1234567890" --full-
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests for new functionality
+4. Run `uv run pytest tests/ -v` and add tests for new functionality
 5. Submit a pull request
 
 ## License
