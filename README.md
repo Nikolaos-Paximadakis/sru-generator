@@ -43,7 +43,7 @@ The package is intentionally generic. It owns SRU formatting, validation, crypto
 - Comprehensive validation and error handling
 - Detailed logging for debugging and monitoring
 
-### Enhanced Features (v1.1.0)
+### Enhanced Features
 - **Configuration Management**: Centralized configuration system with validation
 - **Enhanced Validation**: Comprehensive data validation with custom exceptions
 - **Multi-Currency Support**: Automatic currency conversion with exchange rates
@@ -519,7 +519,7 @@ print("✅ SRU file generated successfully!")
 - `write_sru_file()`: Write content to SRU file
 - `read_crypto_sru_content()`: Read crypto SRU content from file
 
-### Enhanced Functions (v1.1.0)
+### Enhanced Functions
 
 #### Configuration Management
 - `SRUConfig`: Configuration class for all settings
@@ -588,11 +588,7 @@ sru-generator trades --data "trades.json" --personal-number "1234567890" --full-
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run `uv run pytest tests/ -v` and add tests for new functionality
-5. Submit a pull request
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
@@ -604,9 +600,4 @@ For questions, issues, or contributions, please visit the [GitHub repository](ht
 
 ## Changelog
 
-### Version 1.0.0
-- Initial release
-- Support for stock trade SRU generation
-- Support for crypto transaction merging
-- Greek character conversion
-- Comprehensive validation and error handling
+See [CHANGELOG.md](CHANGELOG.md).
