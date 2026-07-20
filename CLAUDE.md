@@ -93,7 +93,7 @@ This package should stay generic. Do not add:
 - application-specific storage paths
 - application-specific taxpayer profile loading
 
-Those belong in the consuming application. Mihalis now uses this package with exactly that split.
+Those belong in the consuming application.
 
 ### utils.py logger behaviour
 

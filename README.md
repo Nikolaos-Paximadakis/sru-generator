@@ -145,7 +145,7 @@ info_content = build_info_sru(personal_info)
 blanketter_content = build_blanketter_sru(trade_rows, personal_info, year=2024)
 ```
 
-This split is how Mihalis now uses the package: Mihalis computes SEK sell rows and loads taxpayer profile data locally, then hands generic rows into `build_blanketter_sru(...)`.
+This split is how a consuming application typically uses the package: it computes SEK sell rows and loads taxpayer profile data locally, then hands generic rows into `build_blanketter_sru(...)`.
 
 ### Advanced Usage with Crypto
 
