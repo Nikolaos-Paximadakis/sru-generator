@@ -141,3 +141,4 @@ Thumbs.db
 # Project specific
 *.sru
 output/
+tasks.md

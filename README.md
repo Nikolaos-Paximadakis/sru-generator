@@ -43,7 +43,7 @@ The package is intentionally generic. It owns SRU formatting, validation, crypto
 - Comprehensive validation and error handling
 - Detailed logging for debugging and monitoring
 
-### Enhanced Features (v1.1.0)
+### Enhanced Features
 - **Configuration Management**: Centralized configuration system with validation
 - **Enhanced Validation**: Comprehensive data validation with custom exceptions
 - **Multi-Currency Support**: Automatic currency conversion with exchange rates
@@ -58,11 +58,11 @@ The package is intentionally generic. It owns SRU formatting, validation, crypto
 pip install sru-generator
 ```
 
-### From source
+### From source (development)
 ```bash
 git clone https://github.com/Nikolaos-Paximadakis/sru-generator.git
 cd sru-generator
-pip install -e .
+uv sync --group dev
 ```
 
 ### Local workspace dependency
@@ -70,7 +70,7 @@ pip install -e .
 If another local project depends on `sru_generator`, install it as an editable local dependency:
 
 ```bash
-pip install -e /path/to/sru_generator
+uv pip install -e /path/to/sru_generator
 ```
 
 ## Quick Start
@@ -145,7 +145,7 @@ info_content = build_info_sru(personal_info)
 blanketter_content = build_blanketter_sru(trade_rows, personal_info, year=2024)
 ```
 
-This split is how Mihalis now uses the package: Mihalis computes SEK sell rows and loads taxpayer profile data locally, then hands generic rows into `build_blanketter_sru(...)`.
+This split is how a consuming application typically uses the package: it computes SEK sell rows and loads taxpayer profile data locally, then hands generic rows into `build_blanketter_sru(...)`.
 
 ### Advanced Usage with Crypto
 
@@ -519,7 +519,7 @@ print("✅ SRU file generated successfully!")
 - `write_sru_file()`: Write content to SRU file
 - `read_crypto_sru_content()`: Read crypto SRU content from file
 
-### Enhanced Functions (v1.1.0)
+### Enhanced Functions
 
 #### Configuration Management
 - `SRUConfig`: Configuration class for all settings
@@ -588,11 +588,7 @@ sru-generator trades --data "trades.json" --personal-number "1234567890" --full-
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
@@ -604,9 +600,4 @@ For questions, issues, or contributions, please visit the [GitHub repository](ht
 
 ## Changelog
 
-### Version 1.0.0
-- Initial release
-- Support for stock trade SRU generation
-- Support for crypto transaction merging
-- Greek character conversion
-- Comprehensive validation and error handling
+See [CHANGELOG.md](CHANGELOG.md).
