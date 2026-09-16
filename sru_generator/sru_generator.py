@@ -92,6 +92,35 @@ def round_k4_cost_basis(value: Any) -> int:
     )
 
 
+def _comparable_profit_loss(value: Any, stock_name: str) -> Optional[int]:
+    """The caller's own profit/loss in whole kronor, or `None` when there is nothing to compare.
+
+    Diagnostic only -- the written figure is derived (see `K4_SALE_PRICE_ROUNDING`). An absent
+    key, an explicit `None`, an unparseable string and a non-finite `Decimal` all mean the same
+    thing here: the caller made no claim this row can be checked against. A stated 0 is not one
+    of them.
+
+    Every one of those must be swallowed rather than raised. `format_trade_item_sru` skips a row
+    whose formatting throws, while `calculate_group_totals` no longer reads this key at all and
+    would still count the row -- so letting a bad diagnostic value escape produces a group total
+    with no row above it. NaN is the case that reached this docstring: `Decimal("NaN")` parses
+    happily and only fails at `int()`.
+    """
+    if value is None:
+        return None
+    try:
+        return int(
+            Decimal(str(value)).quantize(
+                WHOLE_NUMBER_ROUNDING, rounding=ROUND_HALF_EVEN
+            )
+        )
+    except Exception:
+        logger.warning(
+            "Invalid 'profit/loss' for '%s'. Not cross-checking this row.", stock_name
+        )
+        return None
+
+
 def generate_sru_info_content(
     personal_number: str,
     full_name: str,
@@ -188,35 +217,13 @@ def format_trade_item_sru(
             )
             cost_basis_decimal = Decimal(0)
 
-        # `None` and an absent key both mean "the caller did not state one", which is not the
-        # same as a stated 0 -- the cross-check below must not accuse a row that never made a
-        # claim. Since the written figure is derived, the key is now purely diagnostic.
-        supplied_profit_loss = row_data.get("profit/loss")
-        if supplied_profit_loss is None:
-            profit_loss_from_data_decimal = None
-        else:
-            try:
-                profit_loss_from_data_decimal = Decimal(str(supplied_profit_loss))
-            except Exception:
-                logger.warning(
-                    "Invalid 'profit/loss' for '%s'. Not cross-checking this row.",
-                    stock_name,
-                )
-                profit_loss_from_data_decimal = None
-
         # Convert to integers and validate ranges. Each column has its own direction --
-        # see `K4_SALE_PRICE_ROUNDING`. `profit_loss_from_data` is rounded only so the
+        # see `K4_SALE_PRICE_ROUNDING`. The caller's own profit/loss is rounded only so the
         # consistency check below has something to compare against; it is never written.
         amount_sold_for = round_k4_sale_price(amount_sold_for_decimal)
         cost_basis = round_k4_cost_basis(cost_basis_decimal)
-        profit_loss_from_data = (
-            None
-            if profit_loss_from_data_decimal is None
-            else int(
-                profit_loss_from_data_decimal.quantize(
-                    WHOLE_NUMBER_ROUNDING, rounding=ROUND_HALF_EVEN
-                )
-            )
+        profit_loss_from_data = _comparable_profit_loss(
+            row_data.get("profit/loss"), stock_name
         )
 
         # Validate monetary values are within allowed range

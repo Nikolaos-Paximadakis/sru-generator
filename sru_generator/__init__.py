@@ -77,7 +77,7 @@ from .sru_generator import (
 )
 from .validators import TradeDataValidator, validate_personal_info, validate_trade_data
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 __author__ = "Your Name"
 __email__ = "your.email@example.com"
 

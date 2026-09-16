@@ -383,6 +383,46 @@ class TestK4WholeKronaRounding(unittest.TestCase):
         self.assertEqual(totals["total_profit"], 297)
         self.assertEqual(totals["total_loss"], 0)
 
+    def test_an_unusable_supplied_profit_does_not_remove_the_row_from_the_file(self):
+        """The figure is diagnostic, so a bad one must not cost the row its lines.
+
+        `calculate_group_totals` no longer reads the key at all, so a row that formatting
+        throws away still lands in the group totals -- a summa with nothing above it.
+        `Decimal("NaN")` is the case that gets there: it parses, and only `int()` fails.
+        """
+        row = {
+            "quantity": 1,
+            "stock": "X",
+            "net value": "100.99",
+            "total net value of purchase": "50.01",
+            "profit/loss": "NaN",
+        }
+
+        content = format_trade_item_sru(row, 0, 0)
+        totals = calculate_group_totals([row])
+
+        self.assertIn("#UPPGIFT 3102 100", content)
+        self.assertIn("#UPPGIFT 3103 51", content)
+        self.assertIn("#UPPGIFT 3104 49", content)
+        self.assertEqual(totals["total_sold"], 100)
+        self.assertEqual(totals["total_cost_basis"], 51)
+        self.assertEqual(totals["total_profit"], 49)
+
+    def test_an_unreadable_supplied_profit_is_not_cross_checked_either(self):
+        content = format_trade_item_sru(
+            {
+                "quantity": 1,
+                "stock": "X",
+                "net value": "100.99",
+                "total net value of purchase": "50.01",
+                "profit/loss": "not a number",
+            },
+            0,
+            0,
+        )
+
+        self.assertIn("#UPPGIFT 3104 49", content)
+
     def test_the_helpers_state_the_two_directions(self):
         self.assertEqual(round_k4_sale_price("10.99"), 10)
         self.assertEqual(round_k4_sale_price("10.00"), 10)
