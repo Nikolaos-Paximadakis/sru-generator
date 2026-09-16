@@ -40,6 +40,8 @@ from .exceptions import (
 from .models import CryptoSRUGroup, PersonalInfo, SRUTradeRow
 from .sru_generator import MAX_MONETARY_VALUE  # Constants
 from .sru_generator import (
+    K4_COST_BASIS_ROUNDING,
+    K4_SALE_PRICE_ROUNDING,
     MAX_GROUP_NUMBER,
     NUMBER_OF_CHARACTERS_FOR_STOCK_NAME,
     SRU_FIELD_BLANKETT_END,
@@ -69,6 +71,8 @@ from .sru_generator import (
     generate_sru_trade_content,
     merge_sru_groups,
     read_crypto_sru_content,
+    round_k4_cost_basis,
+    round_k4_sale_price,
     write_sru_file,
 )
 from .validators import TradeDataValidator, validate_personal_info, validate_trade_data
@@ -145,6 +149,10 @@ __all__ = [
     "SRU_FIELD_BLANKETT_END",
     "SRU_FIELD_FILE_END",
     "WHOLE_NUMBER_ROUNDING",
+    "K4_SALE_PRICE_ROUNDING",
+    "K4_COST_BASIS_ROUNDING",
+    "round_k4_sale_price",
+    "round_k4_cost_basis",
     "NUMBER_OF_CHARACTERS_FOR_STOCK_NAME",
     "MAX_GROUP_NUMBER",
     "MAX_MONETARY_VALUE",

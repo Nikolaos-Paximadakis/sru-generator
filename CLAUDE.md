@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-`sru-generator` (v1.2.0) — installable Python package for generating Swedish Skatteverket SRU tax files (K4 form). Zero external runtime dependencies; stdlib only. Python >= 3.8.
+`sru-generator` (v1.3.0) — installable Python package for generating Swedish Skatteverket SRU tax files (K4 form). Zero external runtime dependencies; stdlib only. Python >= 3.8.
 
 ## Common Commands
 
@@ -64,7 +64,13 @@ A companion info file (INFO.SRU) uses `#DATABESKRIVNING_START ... #DATABESKRIVNI
 
 ### Precision
 
-All monetary arithmetic uses `decimal.Decimal` (ROUND_HALF_EVEN to whole numbers). Floats and ints passed in are immediately wrapped in `Decimal(str(value))`. The tolerance check in `format_trade_item_sru` allows a difference of 1 (integer) between calculated and supplied profit/loss; the validator layer allows a difference of `Decimal("1")`.
+All monetary arithmetic uses `decimal.Decimal`; floats and ints passed in are immediately wrapped in `Decimal(str(value))`.
+
+**A K4 row's whole-krona rounding is Skatteverket's rule, and it is three rules, not one** (`K4_SALE_PRICE_ROUNDING` in `sru_generator.py` carries the citation). Försäljningspris rounds **öre down** (`ROUND_FLOOR`), omkostnadsbelopp rounds **öre up** (`ROUND_CEILING`), and vinst/förlust is **derived from those two rounded amounts** — never rounded on its own. Group totals round each row the same way and only then sum, so `3300`/`3301`/`3304`/`3305` are the sums of the columns printed above them and every row states its own difference. Until 2026-09-16 all three amounts were independently `ROUND_HALF_EVEN`, which is right for none of them and let a row contradict itself by 1 kr.
+
+`SRUConfig.rounding_mode` does **not** reach any of this and never did: the K4 rule is not a preference.
+
+A caller's `profit/loss` is now diagnostic only — it is cross-checked against the derived figure and never written. `format_trade_item_sru` warns when the two differ by more than 1 (a difference of exactly 1 is the two rounding directions working); an absent or unreadable value is not cross-checked at all. The validator layer still allows a difference of `Decimal("1")` against `net value - cost basis`.
 
 ### Validation classes
 

@@ -16,6 +16,8 @@ from sru_generator.sru_generator import (
     generate_sru_header,
     generate_sru_info_content,
     generate_sru_trade_content,
+    round_k4_cost_basis,
+    round_k4_sale_price,
     write_sru_file,
 )
 
@@ -220,3 +222,169 @@ class TestSRUGenerator(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestK4WholeKronaRounding(unittest.TestCase):
+    """Skatteverket's whole-krona rule for a K4 row, which is not one rule but three.
+
+    From the Inkomstdeklaration 1 e-service's help text for bilaga K4 avsnitt A
+    (https://www8.skatteverket.se/hjalptexter/EfInk1k4_aktie.html): forsaljningspris rounds
+    "oren nedat", omkostnadsbelopp rounds "oren uppat", and vinst/forlust "raknas ut
+    automatiskt" from those two. Until 2026-09-16 all three were rounded independently with
+    ROUND_HALF_EVEN, which is right for none of them.
+    """
+
+    def test_the_sale_price_drops_its_ore_and_the_cost_basis_gains_one(self):
+        content = format_trade_item_sru(
+            {
+                "quantity": 100,
+                "stock": "Apple Inc",
+                "net value": "15000.99",
+                "total net value of purchase": "14000.01",
+                "profit/loss": "1000.98",
+            },
+            0,
+            0,
+        )
+
+        # Half-even would have written 15001 and 14000, overstating the gain by 2 kr.
+        self.assertIn("#UPPGIFT 3102 15000", content)
+        self.assertIn("#UPPGIFT 3103 14001", content)
+
+    def test_the_row_states_its_own_difference_not_the_supplied_profit(self):
+        content = format_trade_item_sru(
+            {
+                "quantity": 100,
+                "stock": "Apple Inc",
+                "net value": "15000.99",
+                "total net value of purchase": "14000.01",
+                "profit/loss": "1000.98",  # half-even: 1001. The row says 999.
+            },
+            0,
+            0,
+        )
+
+        self.assertIn("#UPPGIFT 3104 999", content)
+        self.assertNotIn("#UPPGIFT 3104 1001", content)
+
+    def test_a_loss_row_rounds_the_same_way_round(self):
+        content = format_trade_item_sru(
+            {
+                "quantity": 50,
+                "stock": "Microsoft Corp",
+                "net value": "12000.01",
+                "total net value of purchase": "13000.99",
+                "profit/loss": "-1000.98",
+            },
+            0,
+            0,
+        )
+
+        self.assertIn("#UPPGIFT 3102 12000", content)
+        self.assertIn("#UPPGIFT 3103 13001", content)
+        self.assertIn("#UPPGIFT 3105 1001", content)  # losses are written positive
+
+    def test_a_sub_krona_result_needs_no_rule_about_truncating_negatives(self):
+        """The old open question -- does -0.40 round to a 0 vinst or a 1 kr forlust? -- does
+        not survive deriving the figure: the answer follows from the two columns."""
+        gain = format_trade_item_sru(
+            {
+                "quantity": 1,
+                "stock": "A",
+                "net value": "100.40",
+                "total net value of purchase": "100.00",
+            },
+            0,
+            0,
+        )
+        self.assertIn("#UPPGIFT 3104 0", gain)
+
+        loss = format_trade_item_sru(
+            {
+                "quantity": 1,
+                "stock": "B",
+                "net value": "100.00",
+                "total net value of purchase": "100.60",
+            },
+            0,
+            0,
+        )
+        self.assertIn("#UPPGIFT 3105 1", loss)
+
+    def test_every_row_in_a_generated_file_states_its_own_difference(self):
+        rows = [
+            {
+                "quantity": 1,
+                "stock": f"S{index}",
+                "net value": f"{1000 + index}.{ore:02d}",
+                "total net value of purchase": f"{900 + index}.{(99 - ore):02d}",
+            }
+            for index, ore in enumerate((0, 1, 49, 50, 51, 99))
+        ]
+
+        content = generate_sru_trade_content(rows, "John Doe", "1234567890", year=2025)
+        fields = {}
+        for line in content.splitlines():
+            if line.startswith("#UPPGIFT "):
+                _, code, value = line.split(" ", 2)
+                fields.setdefault(code, []).append(value)
+
+        for index in range(len(rows)):
+            base = 3100 + index * 10
+            sale = int(fields[str(base + 2)][0])
+            cost = int(fields[str(base + 3)][0])
+            profit = int(fields.get(str(base + 4), [0])[0])
+            loss = int(fields.get(str(base + 5), [0])[0])
+            self.assertEqual(sale - cost, profit - loss, f"row {index} does not add up")
+
+    def test_the_group_totals_are_the_sums_of_the_rows_printed_above_them(self):
+        rows = [
+            {
+                "quantity": 1,
+                "stock": f"S{index}",
+                "net value": f"{1000 + index}.{ore:02d}",
+                "total net value of purchase": f"{900 + index}.{(99 - ore):02d}",
+            }
+            for index, ore in enumerate((0, 1, 49, 50, 51, 99))
+        ]
+
+        content = generate_sru_trade_content(rows, "John Doe", "1234567890", year=2025)
+        fields = {}
+        for line in content.splitlines():
+            if line.startswith("#UPPGIFT "):
+                _, code, value = line.split(" ", 2)
+                fields.setdefault(code, []).append(value)
+
+        sold = sum(int(fields[str(3100 + i * 10 + 2)][0]) for i in range(len(rows)))
+        cost = sum(int(fields[str(3100 + i * 10 + 3)][0]) for i in range(len(rows)))
+        profit = sum(
+            int(fields.get(str(3100 + i * 10 + 4), [0])[0]) for i in range(len(rows))
+        )
+        loss = sum(
+            int(fields.get(str(3100 + i * 10 + 5), [0])[0]) for i in range(len(rows))
+        )
+
+        # A zero total is omitted rather than written as 0, which is pre-existing behaviour.
+        self.assertEqual(int(fields["3300"][0]), sold)
+        self.assertEqual(int(fields["3301"][0]), cost)
+        self.assertEqual(int(fields.get("3304", [0])[0]), profit)
+        self.assertEqual(int(fields.get("3305", [0])[0]), loss)
+        # And the block as a whole adds up, which independent rounding did not guarantee.
+        self.assertEqual(sold - cost, profit - loss)
+
+    def test_the_totals_round_each_row_before_summing(self):
+        """Sum-then-round is not round-then-sum, and the gap grows with the row count."""
+        totals = calculate_group_totals(
+            [{"net value": "100.60", "total net value of purchase": "0.10"}] * 3
+        )
+
+        self.assertEqual(totals["total_sold"], 300)  # not 301.80 -> 302
+        self.assertEqual(totals["total_cost_basis"], 3)  # not 0.30 -> 0
+        self.assertEqual(totals["total_profit"], 297)
+        self.assertEqual(totals["total_loss"], 0)
+
+    def test_the_helpers_state_the_two_directions(self):
+        self.assertEqual(round_k4_sale_price("10.99"), 10)
+        self.assertEqual(round_k4_sale_price("10.00"), 10)
+        self.assertEqual(round_k4_cost_basis("10.01"), 11)
+        self.assertEqual(round_k4_cost_basis("10.00"), 10)
