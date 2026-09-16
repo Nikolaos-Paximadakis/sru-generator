@@ -92,8 +92,8 @@ def round_k4_cost_basis(value: Any) -> int:
     )
 
 
-def _comparable_profit_loss(value: Any, stock_name: str) -> Optional[int]:
-    """The caller's own profit/loss in whole kronor, or `None` when there is nothing to compare.
+def _comparable_profit_loss(value: Any, stock_name: str) -> Optional[Decimal]:
+    """The caller's own profit/loss, or `None` when there is nothing to compare.
 
     Diagnostic only -- the written figure is derived (see `K4_SALE_PRICE_ROUNDING`). An absent
     key, an explicit `None`, an unparseable string and a non-finite `Decimal` all mean the same
@@ -109,11 +109,10 @@ def _comparable_profit_loss(value: Any, stock_name: str) -> Optional[int]:
     if value is None:
         return None
     try:
-        return int(
-            Decimal(str(value)).quantize(
-                WHOLE_NUMBER_ROUNDING, rounding=ROUND_HALF_EVEN
-            )
-        )
+        supplied = Decimal(str(value))
+        if not supplied.is_finite():
+            raise ValueError("not a finite amount")
+        return supplied
     except Exception:
         logger.warning(
             "Invalid 'profit/loss' for '%s'. Not cross-checking this row.", stock_name
@@ -218,8 +217,7 @@ def format_trade_item_sru(
             cost_basis_decimal = Decimal(0)
 
         # Convert to integers and validate ranges. Each column has its own direction --
-        # see `K4_SALE_PRICE_ROUNDING`. The caller's own profit/loss is rounded only so the
-        # consistency check below has something to compare against; it is never written.
+        # see `K4_SALE_PRICE_ROUNDING`.
         amount_sold_for = round_k4_sale_price(amount_sold_for_decimal)
         cost_basis = round_k4_cost_basis(cost_basis_decimal)
         profit_loss_from_data = _comparable_profit_loss(
@@ -251,22 +249,27 @@ def format_trade_item_sru(
 
         # Skatteverket derives vinst/forlust from the two rounded columns, so this is the
         # value written -- not the caller's own `profit/loss`, which cannot be reconciled
-        # with the row printed above it. A difference of exactly 1 is the two rounding
-        # directions doing their job and is not reported; anything larger means the caller's
-        # rows do not add up, which is a fact about the input and worth saying out loud.
+        # with the row printed above it.
         profit_loss = amount_sold_for - cost_basis
-        difference = (
-            0
-            if profit_loss_from_data is None
-            else abs(profit_loss - profit_loss_from_data)
-        )
-        if difference > 1:  # Using 1 since we're now working with integers
-            logger.warning(
-                "Calculated profit/loss mismatch for '%s': calculated=%s, data=%s. Using the calculated value for SRU.",
-                stock_name,
-                profit_loss,
-                profit_loss_from_data,
+
+        # The question this asks is whether the *caller's* row adds up, which is a fact about
+        # the input, so it is asked of the unrounded amounts. Comparing the rounded ones
+        # instead accuses correct input: `floor(sale) - ceil(cost)` sits anywhere in
+        # `(sale - cost - 2, sale - cost]`, so a self-consistent row can differ from its own
+        # rounded profit by a full 2 -- 10.99 / 10.01 / 0.98 is one, and 12% of rows are.
+        # The tolerance is the one the validator layer already documents for this comparison.
+        if profit_loss_from_data is not None:
+            difference = abs(
+                (amount_sold_for_decimal - cost_basis_decimal) - profit_loss_from_data
             )
+            if difference > Decimal("1"):
+                logger.warning(
+                    "Supplied profit/loss for '%s' does not match its own sale price minus cost basis: data=%s, sale-cost=%s. Writing the derived %s.",
+                    stock_name,
+                    profit_loss_from_data,
+                    amount_sold_for_decimal - cost_basis_decimal,
+                    profit_loss,
+                )
 
         base_code = 3100 + (item_index_in_group * 10)
         content += f"#UPPGIFT {base_code} {quantity}\n"

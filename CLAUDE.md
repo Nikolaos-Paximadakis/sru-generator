@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-`sru-generator` (v1.3.0) — installable Python package for generating Swedish Skatteverket SRU tax files (K4 form). Zero external runtime dependencies; stdlib only. Python >= 3.8.
+`sru-generator` (v1.3.1) — installable Python package for generating Swedish Skatteverket SRU tax files (K4 form). Zero external runtime dependencies; stdlib only. Python >= 3.8.
 
 ## Common Commands
 
@@ -70,7 +70,7 @@ All monetary arithmetic uses `decimal.Decimal`; floats and ints passed in are im
 
 `SRUConfig.rounding_mode` does **not** reach any of this and never did: the K4 rule is not a preference.
 
-A caller's `profit/loss` is now diagnostic only — it is cross-checked against the derived figure and never written. `format_trade_item_sru` warns when the two differ by more than 1 (a difference of exactly 1 is the two rounding directions working); an absent or unreadable value is not cross-checked at all. The validator layer still allows a difference of `Decimal("1")` against `net value - cost basis`.
+A caller's `profit/loss` is now diagnostic only — it is cross-checked against the derived figure and never written. the comparison is against the **unrounded** `sale - cost` with a tolerance of 1, because the rounded figures can legitimately differ by 2; an absent or unreadable value is not cross-checked at all. The validator layer still allows a difference of `Decimal("1")` against `net value - cost basis`.
 
 ### Validation classes
 

@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.3.1] - 2026-09-16
+
+### Fixed
+- The "profit/loss mismatch" warning asked its question of the *rounded* amounts, so 1.3.0
+  accused correct input: `floor(sale) - ceil(cost)` lies in `(sale - cost - 2, sale - cost]`,
+  and a self-consistent row can therefore differ from its own rounded profit by a full 2.
+  Measured at **12% of random rows**, which would have made a genuine inconsistency
+  unnoticeable. It now compares the caller's `profit/loss` against the unrounded
+  `sale - cost`, with the tolerance the validator layer already documents.
+
 ## [1.3.0] - 2026-09-16
 
 ### Changed

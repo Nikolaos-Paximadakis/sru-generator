@@ -423,6 +423,44 @@ class TestK4WholeKronaRounding(unittest.TestCase):
 
         self.assertIn("#UPPGIFT 3104 49", content)
 
+    def test_a_self_consistent_row_is_never_accused_of_not_adding_up(self):
+        """The two directions can move the derived figure a full 2 away from the caller's own.
+
+        `floor(sale) - ceil(cost)` lies in `(sale - cost - 2, sale - cost]`, so asking the
+        question of the *rounded* amounts accuses correct input -- measured at 12% of random
+        self-consistent rows. It is asked of the unrounded ones instead.
+        """
+        with self.assertNoLogs("sru_generator", level="WARNING"):
+            format_trade_item_sru(
+                {
+                    "quantity": 1,
+                    "stock": "X",
+                    "net value": "10.99",
+                    "total net value of purchase": "10.01",
+                    "profit/loss": "0.98",  # exactly sale - cost; derived is -1
+                },
+                0,
+                0,
+            )
+
+    def test_a_row_that_does_not_add_up_still_is(self):
+        with self.assertLogs("sru_generator", level="WARNING") as captured:
+            format_trade_item_sru(
+                {
+                    "quantity": 1,
+                    "stock": "X",
+                    "net value": "100.00",
+                    "total net value of purchase": "10.00",
+                    "profit/loss": "5.00",  # sale - cost is 90
+                },
+                0,
+                0,
+            )
+
+        self.assertIn(
+            "does not match its own sale price minus cost basis", captured.output[0]
+        )
+
     def test_the_helpers_state_the_two_directions(self):
         self.assertEqual(round_k4_sale_price("10.99"), 10)
         self.assertEqual(round_k4_sale_price("10.00"), 10)
