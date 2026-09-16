@@ -70,7 +70,7 @@ All monetary arithmetic uses `decimal.Decimal`; floats and ints passed in are im
 
 `SRUConfig.rounding_mode` does **not** reach any of this and never did: the K4 rule is not a preference.
 
-A caller's `profit/loss` is now diagnostic only — it is cross-checked against the derived figure and never written. the comparison is against the **unrounded** `sale - cost` with a tolerance of 1, because the rounded figures can legitimately differ by 2; an absent or unreadable value is not cross-checked at all. The validator layer still allows a difference of `Decimal("1")` against `net value - cost basis`.
+A caller's `profit/loss` is now diagnostic only — it is cross-checked and never written. The comparison is against the **unrounded** `sale - cost`, with a tolerance of 1: asking it of the rounded figures accuses correct input, since `floor(sale) - ceil(cost)` can sit a full 2 below `sale - cost` (12% of random self-consistent rows tripped it in 1.3.0). An absent, unreadable or non-finite value is not cross-checked at all. The validator layer still allows a difference of `Decimal("1")` against `net value - cost basis`.
 
 ### Validation classes
 
