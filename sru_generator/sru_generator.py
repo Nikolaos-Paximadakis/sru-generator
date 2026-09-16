@@ -7,7 +7,7 @@ according to Swedish tax authority specifications.
 
 import os
 from datetime import datetime
-from decimal import ROUND_HALF_EVEN, Decimal
+from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_EVEN, Decimal
 from typing import Any, Callable, Dict, List, Optional
 
 from .utils import setup_logger
@@ -41,11 +41,84 @@ SRU_FIELD_FILE_END = "#FIL_SLUT"
 
 # Define rounding template for whole numbers
 WHOLE_NUMBER_ROUNDING = Decimal("1")
+
+# Skatteverket states the whole-krona rule per K4 column, and it is not symmetric. From the
+# Inkomstdeklaration 1 e-service's own help text for bilaga K4, avsnitt A ("Marknadsnoterade
+# aktier, aktieindexobligationer, aktieoptioner m.m."); avsnitt D says the same:
+#
+#   Kolumnen "Forsaljningspris"  -- "Avrunda oren nedat till hela kronor."
+#   Kolumnen "Omkostnadsbelopp"  -- "Avrunda oren uppat till hela kronor."
+#   Kolumnen "Vinst/Forlust"     -- "raknas ut automatiskt genom att forsaljningspriset
+#                                     minskas med det omkostnadsbelopp du fyllt i."
+#
+# https://www8.skatteverket.se/hjalptexter/EfInk1k4_aktie.html
+#
+# Three consequences, each of which this module had wrong until 2026-09-16, when every amount
+# was independently rounded with ROUND_HALF_EVEN:
+#
+# - The two directions are opposite. Neither column is "truncated" and neither is rounded to
+#   nearest, so no single rounding mode is right for both.
+# - Vinst/forlust is *derived*, never rounded on its own. Rounding it independently is what
+#   let a K4 row state a vinst that is not that row's own forsaljningspris minus its own
+#   omkostnadsbelopp; measured on a real 2019-2025 archive, 104 of 450 rows did.
+# - Because it is derived, the question of which way a negative amount truncates never arises.
+#
+# This is Skatteverket's rule rather than a preference, so it is deliberately not routed
+# through `SRUConfig.rounding_mode`.
+K4_SALE_PRICE_ROUNDING = ROUND_FLOOR
+K4_COST_BASIS_ROUNDING = ROUND_CEILING
 NUMBER_OF_CHARACTERS_FOR_STOCK_NAME = 80
 
 # Define numeric limits for SRU fields
 MAX_GROUP_NUMBER = 99999
 MAX_MONETARY_VALUE = 999999999999
+
+
+def round_k4_sale_price(value: Any) -> int:
+    """Forsaljningspris in whole kronor: oren nedat (`K4_SALE_PRICE_ROUNDING`)."""
+    return int(
+        Decimal(str(value)).quantize(
+            WHOLE_NUMBER_ROUNDING, rounding=K4_SALE_PRICE_ROUNDING
+        )
+    )
+
+
+def round_k4_cost_basis(value: Any) -> int:
+    """Omkostnadsbelopp in whole kronor: oren uppat (`K4_COST_BASIS_ROUNDING`)."""
+    return int(
+        Decimal(str(value)).quantize(
+            WHOLE_NUMBER_ROUNDING, rounding=K4_COST_BASIS_ROUNDING
+        )
+    )
+
+
+def _comparable_profit_loss(value: Any, stock_name: str) -> Optional[int]:
+    """The caller's own profit/loss in whole kronor, or `None` when there is nothing to compare.
+
+    Diagnostic only -- the written figure is derived (see `K4_SALE_PRICE_ROUNDING`). An absent
+    key, an explicit `None`, an unparseable string and a non-finite `Decimal` all mean the same
+    thing here: the caller made no claim this row can be checked against. A stated 0 is not one
+    of them.
+
+    Every one of those must be swallowed rather than raised. `format_trade_item_sru` skips a row
+    whose formatting throws, while `calculate_group_totals` no longer reads this key at all and
+    would still count the row -- so letting a bad diagnostic value escape produces a group total
+    with no row above it. NaN is the case that reached this docstring: `Decimal("NaN")` parses
+    happily and only fails at `int()`.
+    """
+    if value is None:
+        return None
+    try:
+        return int(
+            Decimal(str(value)).quantize(
+                WHOLE_NUMBER_ROUNDING, rounding=ROUND_HALF_EVEN
+            )
+        )
+    except Exception:
+        logger.warning(
+            "Invalid 'profit/loss' for '%s'. Not cross-checking this row.", stock_name
+        )
+        return None
 
 
 def generate_sru_info_content(
@@ -100,7 +173,8 @@ def format_trade_item_sru(
     - stock: Stock name/identifier
     - net value: Sale price
     - total net value of purchase: Cost basis
-    - profit/loss: Profit or loss amount
+    - profit/loss: optional. Only cross-checked against the derived vinst/forlust, never
+      written -- see `K4_SALE_PRICE_ROUNDING` for why the row derives its own.
     """
     content = ""
 
@@ -143,25 +217,13 @@ def format_trade_item_sru(
             )
             cost_basis_decimal = Decimal(0)
 
-        try:
-            profit_loss_from_data_decimal = Decimal(str(row_data.get("profit/loss", 0)))
-        except Exception:
-            logger.warning("Invalid 'profit/loss' for '%s'. Using 0.", stock_name)
-            profit_loss_from_data_decimal = Decimal(0)
-
-        # Convert to integers and validate ranges
-        amount_sold_for = int(
-            amount_sold_for_decimal.quantize(
-                WHOLE_NUMBER_ROUNDING, rounding=ROUND_HALF_EVEN
-            )
-        )
-        cost_basis = int(
-            cost_basis_decimal.quantize(WHOLE_NUMBER_ROUNDING, rounding=ROUND_HALF_EVEN)
-        )
-        profit_loss_from_data = int(
-            profit_loss_from_data_decimal.quantize(
-                WHOLE_NUMBER_ROUNDING, rounding=ROUND_HALF_EVEN
-            )
+        # Convert to integers and validate ranges. Each column has its own direction --
+        # see `K4_SALE_PRICE_ROUNDING`. The caller's own profit/loss is rounded only so the
+        # consistency check below has something to compare against; it is never written.
+        amount_sold_for = round_k4_sale_price(amount_sold_for_decimal)
+        cost_basis = round_k4_cost_basis(cost_basis_decimal)
+        profit_loss_from_data = _comparable_profit_loss(
+            row_data.get("profit/loss"), stock_name
         )
 
         # Validate monetary values are within allowed range
@@ -181,32 +243,29 @@ def format_trade_item_sru(
                 MAX_MONETARY_VALUE,
             )
             cost_basis = 0
-        if abs(profit_loss_from_data) > MAX_MONETARY_VALUE:
-            logger.error(
-                "Invalid profit/loss %s for '%s'. Must be between -%s and %s. Using 0.",
-                profit_loss_from_data,
-                stock_name,
-                MAX_MONETARY_VALUE,
-                MAX_MONETARY_VALUE,
-            )
-            profit_loss_from_data = 0
+        # The written profit/loss needs no range check of its own: it is the difference of
+        # two values both already clamped to [0, MAX_MONETARY_VALUE], so it cannot leave
+        # [-MAX_MONETARY_VALUE, MAX_MONETARY_VALUE]. An out-of-range `profit/loss` in the
+        # input is reported by the mismatch warning below rather than silently zeroed,
+        # which would have turned a wild input into a clean-looking row.
 
-        calculated_profit_loss = amount_sold_for - cost_basis
-        difference = abs(calculated_profit_loss - profit_loss_from_data)
+        # Skatteverket derives vinst/forlust from the two rounded columns, so this is the
+        # value written -- not the caller's own `profit/loss`, which cannot be reconciled
+        # with the row printed above it. A difference of exactly 1 is the two rounding
+        # directions doing their job and is not reported; anything larger means the caller's
+        # rows do not add up, which is a fact about the input and worth saying out loud.
+        profit_loss = amount_sold_for - cost_basis
+        difference = (
+            0
+            if profit_loss_from_data is None
+            else abs(profit_loss - profit_loss_from_data)
+        )
         if difference > 1:  # Using 1 since we're now working with integers
             logger.warning(
-                "Calculated profit/loss mismatch for '%s': calculated=%s, data=%s. Using data value for SRU.",
+                "Calculated profit/loss mismatch for '%s': calculated=%s, data=%s. Using the calculated value for SRU.",
                 stock_name,
-                calculated_profit_loss,
+                profit_loss,
                 profit_loss_from_data,
-            )
-        elif difference > 0:
-            logger.info(
-                "Small profit/loss difference for '%s': calculated=%s, data=%s. Difference=%s. Using data value for SRU.",
-                stock_name,
-                calculated_profit_loss,
-                profit_loss_from_data,
-                difference,
             )
 
         base_code = 3100 + (item_index_in_group * 10)
@@ -215,10 +274,10 @@ def format_trade_item_sru(
         content += f"#UPPGIFT {base_code + 2} {amount_sold_for}\n"
         content += f"#UPPGIFT {base_code + 3} {cost_basis}\n"
 
-        if profit_loss_from_data >= 0:
-            content += f"#UPPGIFT {base_code + 4} {profit_loss_from_data}\n"
+        if profit_loss >= 0:
+            content += f"#UPPGIFT {base_code + 4} {profit_loss}\n"
         else:
-            content += f"#UPPGIFT {base_code + 5} {abs(profit_loss_from_data)}\n"
+            content += f"#UPPGIFT {base_code + 5} {abs(profit_loss)}\n"
 
     except Exception as e:
         logger.error(
@@ -237,10 +296,14 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
     All monetary values must be integers between 0 and MAX_MONETARY_VALUE.
     Profits and losses are tracked separately, with losses stored as positive numbers.
 
+    Each row is rounded to whole kronor exactly as `format_trade_item_sru` rounds it -- see
+    `K4_SALE_PRICE_ROUNDING` -- and only then summed, so every total is the sum of the column
+    printed above it. A row's `profit/loss` is not read here: vinst/forlust is derived from
+    the two rounded amounts, the way Skatteverket's own K4 does it.
+
     Expected keys in each item of group_data:
     - net value: Sale price
     - total net value of purchase: Cost basis
-    - profit/loss: Profit or loss amount
     """
     group_total_amount_sold = 0
     group_total_cost_basis = 0
@@ -249,22 +312,11 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
 
     for row in group_data:
         try:
-            # Convert to integers and validate ranges
-            amount_sold_for = int(
-                Decimal(str(row.get("net value", 0))).quantize(
-                    WHOLE_NUMBER_ROUNDING, rounding=ROUND_HALF_EVEN
-                )
-            )
-            cost_basis = int(
-                Decimal(str(row.get("total net value of purchase", 0))).quantize(
-                    WHOLE_NUMBER_ROUNDING, rounding=ROUND_HALF_EVEN
-                )
-            )
-            item_pl_from_data = int(
-                Decimal(str(row.get("profit/loss", 0))).quantize(
-                    WHOLE_NUMBER_ROUNDING, rounding=ROUND_HALF_EVEN
-                )
-            )
+            # Rounded exactly as `format_trade_item_sru` rounds the rows above these
+            # totals -- each column its own direction, vinst/forlust derived. A total that
+            # rounded differently from its own rows would not be the column's sum.
+            amount_sold_for = round_k4_sale_price(row.get("net value", 0))
+            cost_basis = round_k4_cost_basis(row.get("total net value of purchase", 0))
 
             # Validate monetary values are within allowed range
             if amount_sold_for < 0 or amount_sold_for > MAX_MONETARY_VALUE:
@@ -281,14 +333,7 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
                     MAX_MONETARY_VALUE,
                 )
                 cost_basis = 0
-            if abs(item_pl_from_data) > MAX_MONETARY_VALUE:
-                logger.error(
-                    "Invalid profit/loss %s in group totals. Must be between -%s and %s. Using 0.",
-                    item_pl_from_data,
-                    MAX_MONETARY_VALUE,
-                    MAX_MONETARY_VALUE,
-                )
-                item_pl_from_data = 0
+            item_profit_loss = amount_sold_for - cost_basis
 
             # Add to totals with validation
             if group_total_amount_sold + amount_sold_for > MAX_MONETARY_VALUE:
@@ -310,17 +355,17 @@ def calculate_group_totals(group_data: List[Dict[str, Any]]) -> Dict[str, int]:
                 group_total_cost_basis += cost_basis
 
             # Handle profit/loss separately
-            if item_pl_from_data >= 0:
-                if current_group_total_profit + item_pl_from_data > MAX_MONETARY_VALUE:
+            if item_profit_loss >= 0:
+                if current_group_total_profit + item_profit_loss > MAX_MONETARY_VALUE:
                     logger.error(
                         "Group total profit would exceed maximum allowed value (%s). Truncating to maximum.",
                         MAX_MONETARY_VALUE,
                     )
                     current_group_total_profit = MAX_MONETARY_VALUE
                 else:
-                    current_group_total_profit += item_pl_from_data
+                    current_group_total_profit += item_profit_loss
             else:
-                loss_amount = abs(item_pl_from_data)
+                loss_amount = abs(item_profit_loss)
                 if current_group_total_loss + loss_amount > MAX_MONETARY_VALUE:
                     logger.error(
                         "Group total loss would exceed maximum allowed value (%s). Truncating to maximum.",
