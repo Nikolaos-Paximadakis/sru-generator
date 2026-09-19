@@ -3,7 +3,10 @@ Tests for SRU Generator package.
 """
 
 import unittest
+from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
+from unittest.mock import patch
 
 from sru_generator import build_blanketter_sru, build_info_sru
 from sru_generator.exceptions import ValidationError
@@ -509,3 +512,72 @@ class TestK4WholeKronaRounding(unittest.TestCase):
         self.assertEqual(round_k4_sale_price("10.00"), 10)
         self.assertEqual(round_k4_cost_basis("10.01"), 11)
         self.assertEqual(round_k4_cost_basis("10.00"), 10)
+
+
+GOLDEN_DIR = Path(__file__).parent / "golden"
+FIXED_NOW = datetime(2024, 3, 1, 12, 0, 0)
+
+# Ten rows, so the stock side spans two pages, and three crypto groups, so the crypto side
+# runs past the last stock page: both of the merge's page-count branches are in the file.
+GOLDEN_TRADE_ROWS = [
+    {
+        "quantity": 10 + i,
+        "stock": f"Stock {i}",
+        "net value": Decimal("1000.55") + i * Decimal("101.25"),
+        "total net value of purchase": Decimal("900.10") + i * Decimal("123.40"),
+        "profit/loss": (Decimal("1000.55") + i * Decimal("101.25"))
+        - (Decimal("900.10") + i * Decimal("123.40")),
+    }
+    for i in range(10)
+]
+GOLDEN_CRYPTO_GROUPS = [
+    {
+        "group_number": n,
+        "uppgifter": [
+            f"#UPPGIFT 3410 {n}",
+            f"#UPPGIFT 3411 C{n}",
+            "#UPPGIFT 3412 100",
+            "#UPPGIFT 3413 60",
+            "#UPPGIFT 3414 40",
+            "#UPPGIFT 3500 100",
+            "#UPPGIFT 3501 60",
+            "#UPPGIFT 3503 40",
+        ],
+    }
+    for n in (1, 2, 3)
+]
+GOLDEN_PERSONAL_INFO = {
+    "personal_number": "1234567890",
+    "full_name": "John Doe",
+    "postal_code": "12345",
+    "city_name": "Stockholm",
+}
+
+
+def build_golden_outputs():
+    """The stock-only and mixed files, with the clock the header stamps held still."""
+    with patch("sru_generator.sru_generator.datetime") as mock_datetime:
+        mock_datetime.now.return_value = FIXED_NOW
+        stock_only = build_blanketter_sru(GOLDEN_TRADE_ROWS, GOLDEN_PERSONAL_INFO, 2024)
+        mixed = build_blanketter_sru(
+            GOLDEN_TRADE_ROWS,
+            GOLDEN_PERSONAL_INFO,
+            2024,
+            crypto_groups=GOLDEN_CRYPTO_GROUPS,
+        )
+    return {"blanketter_stock_only.sru": stock_only, "blanketter_mixed.sru": mixed}
+
+
+class TestBlanketterOutputUnchanged(unittest.TestCase):
+    """Stock-only and mixed files are byte-identical to the ones 1.3.1 wrote before #8.
+
+    #8 let an empty trade list through when crypto groups are given; the golden files in
+    ``tests/golden/`` were generated at 1ab25e1, the commit before it, so any change the
+    crypto-only path makes to the other two shapes shows up here as a diff.
+    """
+
+    def test_stock_only_and_mixed_files_are_unchanged(self):
+        for name, content in build_golden_outputs().items():
+            with self.subTest(name=name):
+                expected = (GOLDEN_DIR / name).read_text(encoding="utf-8")
+                self.assertEqual(content, expected)
