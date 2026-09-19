@@ -6,6 +6,7 @@ import unittest
 from decimal import Decimal
 
 from sru_generator import build_blanketter_sru, build_info_sru
+from sru_generator.exceptions import ValidationError
 from sru_generator.sru_generator import (
     MAX_GROUP_NUMBER,
     MAX_MONETARY_VALUE,
@@ -187,6 +188,48 @@ class TestSRUGenerator(unittest.TestCase):
         self.assertIn("#BLANKETT K4-2024P4", content)
         self.assertIn("#UPPGIFT 3100 100", content)
         self.assertTrue(content.endswith("#FIL_SLUT\n"))
+
+    PERSONAL_INFO = {
+        "personal_number": "1234567890",
+        "full_name": "John Doe",
+        "postal_code": "12345",
+        "city_name": "Stockholm",
+    }
+
+    def test_build_blanketter_sru_crypto_only(self):
+        """No trade rows but crypto groups: only the crypto pages, numbered 1..n."""
+        crypto_groups = [
+            {"group_number": 1, "uppgifter": ["#UPPGIFT 3410 2", "#UPPGIFT 3411 BTC"]},
+            {"group_number": 2, "uppgifter": ["#UPPGIFT 3410 5", "#UPPGIFT 3411 ETH"]},
+        ]
+
+        content = build_blanketter_sru(
+            trade_rows=[],
+            personal_info=self.PERSONAL_INFO,
+            year=2024,
+            crypto_groups=crypto_groups,
+        )
+
+        pages = content.split("#BLANKETT K4-2024P4\n")[1:]
+        self.assertEqual(len(pages), 2)
+        self.assertIn("#UPPGIFT 7014 1\n#UPPGIFT 3410 2\n#UPPGIFT 3411 BTC\n", pages[0])
+        self.assertIn("#UPPGIFT 7014 2\n#UPPGIFT 3410 5\n#UPPGIFT 3411 ETH\n", pages[1])
+        self.assertNotIn("#UPPGIFT 31", content)
+        self.assertNotIn("#UPPGIFT 33", content)
+        self.assertTrue(content.endswith("#BLANKETTSLUT\n#FIL_SLUT\n"))
+
+    def test_build_blanketter_sru_refuses_no_trades_and_no_crypto(self):
+        for crypto_groups in (None, []):
+            with self.subTest(crypto_groups=crypto_groups):
+                with self.assertRaisesRegex(
+                    ValidationError, "Trade data cannot be empty"
+                ):
+                    build_blanketter_sru(
+                        trade_rows=[],
+                        personal_info=self.PERSONAL_INFO,
+                        year=2024,
+                        crypto_groups=crypto_groups,
+                    )
 
     def test_generate_sru_footer(self):
         """Test SRU footer generation."""

@@ -37,19 +37,24 @@ def build_blanketter_sru(
 ) -> str:
     """
     Build a complete ``blanketter.sru`` file content string from generic trade rows.
+
+    ``trade_rows`` may be empty when ``crypto_groups`` is not: the file then holds
+    only the crypto pages, numbered 1..n. With neither, ``ValidationError`` is raised.
     """
     validated_personal = validate_personal_info(dict(personal_info))
-    validated_trades = validate_trade_data([dict(row) for row in trade_rows])
     normalized_crypto_groups = [dict(group) for group in (crypto_groups or [])]
 
-    trade_content = generate_sru_trade_content(
-        trade_data=validated_trades,
-        full_name=validated_personal["full_name"],
-        personal_number=validated_personal["personal_number"],
-        year=year,
-        items_per_group=items_per_group,
-        character_converter=character_converter,
-    )
+    trade_content = ""
+    if trade_rows or not normalized_crypto_groups:
+        validated_trades = validate_trade_data([dict(row) for row in trade_rows])
+        trade_content = generate_sru_trade_content(
+            trade_data=validated_trades,
+            full_name=validated_personal["full_name"],
+            personal_number=validated_personal["personal_number"],
+            year=year,
+            items_per_group=items_per_group,
+            character_converter=character_converter,
+        )
 
     return merge_sru_groups(
         stock_content=trade_content,

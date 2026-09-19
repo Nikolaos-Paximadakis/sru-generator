@@ -60,7 +60,7 @@ A companion info file (INFO.SRU) uses `#DATABESKRIVNING_START ... #DATABESKRIVNI
 3. `validators.py` normalises and validates each item; auto-calculates `profit/loss` if omitted; raises `BusinessRuleError` if the supplied value differs from `net value - cost basis` by more than 1 (Decimal).
 4. `currency.py` converts non-SEK values using stored exchange rates (not called automatically by `sru_generator.py` — callers must convert before passing trade dicts unless they own that conversion separately).
 5. `sru_generator.py` groups trades into blocks of `items_per_group` (default 9), formats `#UPPGIFT` lines, calculates group totals, writes UTF-8 files.
-6. Crypto SRU data can be read from an existing file with `read_crypto_sru_content()` and merged into the stock output via `merge_sru_groups()`.
+6. Crypto SRU data can be read from an existing file with `read_crypto_sru_content()` and merged into the stock output via `merge_sru_groups()`. `build_blanketter_sru()` accepts an empty `trade_rows` when crypto groups are given (a crypto-only year: the file is just the crypto pages, numbered 1..n); with neither it still raises `ValidationError`.
 
 ### Precision
 
