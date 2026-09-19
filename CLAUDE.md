@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-`sru-generator` (v1.3.1) — installable Python package for generating Swedish Skatteverket SRU tax files (K4 form). Zero external runtime dependencies; stdlib only. Python >= 3.8.
+`sru-generator` (v1.3.2) — installable Python package for generating Swedish Skatteverket SRU tax files (K4 form). Zero external runtime dependencies; stdlib only. Python >= 3.8.
 
 ## Common Commands
 

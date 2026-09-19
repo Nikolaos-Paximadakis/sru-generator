@@ -140,5 +140,7 @@ Thumbs.db
 
 # Project specific
 *.sru
+# Synthetic golden files the byte-identity test compares against; no real taxpayer data.
+!tests/golden/*.sru
 output/
 tasks.md

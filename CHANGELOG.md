@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.3.2] - 2026-09-19
+
+### Fixed
+- `build_blanketter_sru` accepts an empty `trade_rows` when `crypto_groups` are given, and writes
+  only the crypto pages, numbered 1..n (#8, #9). A tax year with crypto disposals and no stock
+  sales used to raise `ValidationError: Trade data cannot be empty`. With neither it still
+  raises; `validate_trade_data` itself is unchanged.
+
+### Tests
+- Stock-only and mixed stock + crypto files are compared byte for byte against golden files
+  generated at 1.3.1 (`tests/golden/`), with the header's clock held fixed.
+
 ## [1.3.1] - 2026-09-16
 
 ### Fixed
