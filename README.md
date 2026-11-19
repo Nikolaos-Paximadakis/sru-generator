@@ -208,7 +208,7 @@ Install it to use the named converters (`greek`, `swedish`, `german`, `french`,
 `spanish`):
 
 ```bash
-pip install "text-converters @ git+https://github.com/Nikolaos-Paximadakis/text-converters.git"
+pip install "git+https://github.com/Nikolaos-Paximadakis/text-converters.git@v0.2.0"
 ```
 
 ```python
@@ -227,8 +227,9 @@ when a named converter is asked for (`"none"` never imports it). Without it,
 
 `greek` follows the Greek standard ELOT 743 letter by letter (η is `i`, ου is `ou`,
 Θ/Χ/Ψ give `Th`/`Ch`/`Ps`, or `TH`/`CH`/`PS` in a word written in capitals) but not its
-other letter pairs: `Ευαγγελισμός` becomes `Eyaggelismos`, not `Evangelismos`. The
-`swedish` converter strips å, ä and ö, which SRU files do not require.
+other letter pairs: `Ευαγγελισμός` becomes `Eyaggelismos`, not `Evangelismos`. `french`
+writes œ/æ as `oe`/`ae`. The `swedish` converter strips å, ä and ö, which SRU files
+do not require.
 
 **For names in other scripts:** convert only the characters ISO-8859-1 cannot hold.
 Apply the Greek converter first, then a transliteration library such as

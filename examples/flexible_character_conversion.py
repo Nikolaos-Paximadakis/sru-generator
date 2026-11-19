@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 """
-Example demonstrating character conversion in SRU Generator.
+Example demonstrating character conversion for SRU files.
 
-Converters come from the text-converters package when it is installed:
-    pip install "text-converters @ git+https://github.com/Nikolaos-Paximadakis/text-converters.git"
-Without it, load_character_converter falls back to sru-generator's bundled copy and
-warns that the copy will be removed in 2.0.
+Converters come from the text-converters package (not on PyPI):
+    pip install "git+https://github.com/Nikolaos-Paximadakis/text-converters.git@v0.2.0"
+Inside an application, sru_generator.load_character_converter(name) gives the same
+converters and falls back to sru-generator's bundled copy (deprecated) when
+text-converters is not installed.
 """
 
-from sru_generator import (
-    build_blanketter_sru,
-    load_character_converter,
-    write_sru_file,
-)
+from sru_generator import build_blanketter_sru, write_sru_file
 from sru_generator.models import PersonalInfo
+
+try:
+    from text_converters import get_character_converter
+except ImportError:
+    raise SystemExit(
+        "This example needs text-converters: pip install "
+        '"git+https://github.com/Nikolaos-Paximadakis/text-converters.git@v0.2.0"'
+    ) from None
 
 ME: PersonalInfo = {
     "personal_number": "198112189876",  # made-up example
@@ -66,7 +71,7 @@ def main():
     print("=== SRU Generator - Character Conversion Demo ===\n")
     for name in ("none", "greek", "swedish", "german"):
         print(f"{name} converter:")
-        write_and_report(f"{name}_conversion.sru", load_character_converter(name))
+        write_and_report(f"{name}_conversion.sru", get_character_converter(name))
     print("custom converter:")
     write_and_report("custom_converter.sru", keep_latin1)
     print("\nOnly 'greek' (and the custom one) can write the Greek stock name.")

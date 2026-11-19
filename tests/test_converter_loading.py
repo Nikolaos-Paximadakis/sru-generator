@@ -67,7 +67,10 @@ def test_bundled_copy_with_a_warning_when_absent(
         converter = load_character_converter("greek")
     assert converter("Θεσσαλονίκη") == "Thessaloniki"
     assert str(caught[0].message) == BUNDLED_CONVERTERS_WARNING
-    assert "text-converters.git" in BUNDLED_CONVERTERS_WARNING
+    assert (
+        'pip install "git+https://github.com/Nikolaos-Paximadakis/text-converters.git@v0.2.0"'
+        in BUNDLED_CONVERTERS_WARNING
+    )
 
 
 def test_an_outdated_text_converters_is_not_used(
@@ -154,7 +157,7 @@ PARITY_SAMPLES = (
     "Θεσσαλονίκη Χανιά Ηράκλειο Παπαδόπουλος ΑΘΗΝΑ ΚΑΛΥΨ Χ. Ούζο Υδρα",
     "Åsa Öberg Göteborg É è Ü Ñ Ç",
     "Größe Straße Ärger Öl Übel",
-    "François Ça Éé Àà Ôô Ÿ",
+    "François Ça Éé Àà Ôô Ÿ cœur Œuvre ex æquo Ægir",
     "Niño Señor Ángel Íñigo Úrsula",
 )
 

@@ -20,7 +20,7 @@ from typing import TypeGuard
 
 from .character_converters import (
     CONVERTER_NAMES,
-    TEXT_CONVERTERS_SOURCE,
+    TEXT_CONVERTERS_INSTALL,
     resolve_character_converter,
 )
 from .exceptions import SRUGeneratorError
@@ -203,8 +203,7 @@ def _character_converter(name: str) -> Callable[[str], str]:
     if from_bundled:
         print(
             f"Note: using sru-generator's bundled '{name}' converter, which will be "
-            f"removed in 2.0. Install text-converters: pip install "
-            f'"text-converters @ {TEXT_CONVERTERS_SOURCE}"',
+            f"removed in 2.0. Install text-converters: {TEXT_CONVERTERS_INSTALL}",
             file=sys.stderr,
         )
     return converter
