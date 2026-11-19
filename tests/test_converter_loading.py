@@ -154,7 +154,7 @@ PARITY_SAMPLES = (
     "Θεσσαλονίκη Χανιά Ηράκλειο Παπαδόπουλος ΑΘΗΝΑ ΚΑΛΥΨ Χ. Ούζο Υδρα",
     "Åsa Öberg Göteborg É è Ü Ñ Ç",
     "Größe Straße Ärger Öl Übel",
-    "François Ça Éé Àà Ôô Ÿ",
+    "François Ça Éé Àà Ôô Ÿ cœur Œuvre ex æquo Ægir",
     "Niño Señor Ángel Íñigo Úrsula",
 )
 

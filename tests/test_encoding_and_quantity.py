@@ -108,6 +108,9 @@ class TestCharacterConverters(unittest.TestCase):
     def test_converters_really_convert(self) -> None:
         self.assertEqual(get_character_converter("swedish")("Åäö"), "Aao")
         self.assertEqual(get_character_converter("german")("Größe"), "Groesse")
+        self.assertEqual(
+            get_character_converter("french")("cœur Œuvre æ Æ"), "coeur Oeuvre ae Ae"
+        )
         self.assertEqual(get_character_converter("greek")("Ελλάδα"), "Ellada")
         self.assertEqual(get_character_converter("greek")("Άλφα Ώρα"), "Alfa Ora")
 

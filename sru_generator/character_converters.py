@@ -173,6 +173,10 @@ _FRENCH_TO_ENGLISH: dict[str, str] = {
     "ü": "u",
     "Ÿ": "Y",
     "ÿ": "y",
+    "Æ": "Ae",
+    "æ": "ae",
+    "Œ": "Oe",
+    "œ": "oe",
 }
 
 _SPANISH_TO_ENGLISH: dict[str, str] = {
