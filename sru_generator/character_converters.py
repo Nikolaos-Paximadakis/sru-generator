@@ -291,16 +291,18 @@ CONVERTER_NAMES: tuple[str, ...] = (
     "spanish",
 )
 
+#: Where text-converters comes from (it is not on PyPI), pinned to a tested release.
 TEXT_CONVERTERS_SOURCE = (
-    "git+https://github.com/Nikolaos-Paximadakis/text-converters.git"
+    "git+https://github.com/Nikolaos-Paximadakis/text-converters.git@v0.2.0"
 )
+TEXT_CONVERTERS_INSTALL = f'pip install "{TEXT_CONVERTERS_SOURCE}"'
 #: A text-converters whose Greek converter does not give this is outdated (its old rules
 #: wrote "THessalonikh Papadopoylos") and is not used. Checking behaviour rather than a
 #: version number keeps working however that package numbers its releases.
 _GREEK_PROBE = ("Θεσσαλονίκη Παπαδόπουλος", "Thessaloniki Papadopoulos")
 BUNDLED_CONVERTERS_WARNING = (
     "sru-generator's bundled character converters will be removed in 2.0; "
-    f"install text-converters from {TEXT_CONVERTERS_SOURCE}"
+    f"install text-converters with {TEXT_CONVERTERS_INSTALL}"
 )
 
 

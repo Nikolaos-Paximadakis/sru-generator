@@ -67,7 +67,10 @@ def test_bundled_copy_with_a_warning_when_absent(
         converter = load_character_converter("greek")
     assert converter("Θεσσαλονίκη") == "Thessaloniki"
     assert str(caught[0].message) == BUNDLED_CONVERTERS_WARNING
-    assert "text-converters.git" in BUNDLED_CONVERTERS_WARNING
+    assert (
+        'pip install "git+https://github.com/Nikolaos-Paximadakis/text-converters.git@v0.2.0"'
+        in BUNDLED_CONVERTERS_WARNING
+    )
 
 
 def test_an_outdated_text_converters_is_not_used(

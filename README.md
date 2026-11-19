@@ -208,7 +208,7 @@ Install it to use the named converters (`greek`, `swedish`, `german`, `french`,
 `spanish`):
 
 ```bash
-pip install "text-converters @ git+https://github.com/Nikolaos-Paximadakis/text-converters.git"
+pip install "git+https://github.com/Nikolaos-Paximadakis/text-converters.git@v0.2.0"
 ```
 
 ```python

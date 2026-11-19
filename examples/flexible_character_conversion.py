@@ -3,7 +3,7 @@
 Example demonstrating character conversion in SRU Generator.
 
 Converters come from the text-converters package when it is installed:
-    pip install "text-converters @ git+https://github.com/Nikolaos-Paximadakis/text-converters.git"
+    pip install "git+https://github.com/Nikolaos-Paximadakis/text-converters.git@v0.2.0"
 Without it, load_character_converter falls back to sru-generator's bundled copy and
 warns that the copy will be removed in 2.0.
 """

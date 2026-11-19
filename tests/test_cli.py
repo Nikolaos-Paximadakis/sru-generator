@@ -498,7 +498,7 @@ def test_cli_notes_the_bundled_converter_on_stderr(
     _run_trades_with_conversion(tmp_path, monkeypatch, "greek")
     err = capsys.readouterr().err
     assert "bundled 'greek' converter" in err
-    assert "text-converters.git" in err
+    assert "text-converters.git@v0.2.0" in err
 
 
 def test_cli_is_quiet_with_text_converters_or_none(
