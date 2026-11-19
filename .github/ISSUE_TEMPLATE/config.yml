@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: https://github.com/Nikolaos-Paximadakis/sru-generator/security/advisories/new
+    about: Report vulnerabilities privately, not as a public issue.
+  - name: How should I declare something? (tax question)
+    url: https://www.skatteverket.se/
+    about: This project cannot give tax advice. Ask Skatteverket or a tax adviser.

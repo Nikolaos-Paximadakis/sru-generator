@@ -1,0 +1,47 @@
+name: Bug report
+description: The package produces a wrong file, crashes, or does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste a real personnummer, name, SRU file, trade export or log output.** Issues are public and stay online. Reduce the problem to made-up numbers (for example personnummer `1234567890`, name `Test Person`) before posting.
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      description: Output of `pip show sru-generator` (or the commit you installed)
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version and operating system
+    validations:
+      required: true
+  - type: dropdown
+    id: entry
+    attributes:
+      label: How did you use it?
+      options: [Python API (build_blanketter_sru / build_info_sru), Lower-level functions, CLI (sru-generator), Not sure]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: For a wrong figure, give the input amounts and the line you expected (for example `#UPPGIFT 3102 1000`). If Skatteverket's e-service rejected the file, quote its message.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal code or input to reproduce (made-up data only)
+      render: python
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: This issue contains no real personnummer, names, SRU files or trade data.
+          required: true

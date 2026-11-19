@@ -1,0 +1,23 @@
+[
+    {
+        "quantity": 100,
+        "stock": "Apple Inc",
+        "net value": 15000.00,
+        "total net value of purchase": 14000.00,
+        "profit/loss": 1000.00
+    },
+    {
+        "quantity": 50,
+        "stock": "Microsoft Corp",
+        "net value": 12000.00,
+        "total net value of purchase": 13000.00,
+        "profit/loss": -1000.00
+    },
+    {
+        "quantity": 200,
+        "stock": "Tesla Inc",
+        "net value": 25000.00,
+        "total net value of purchase": 20000.00,
+        "profit/loss": 5000.00
+    }
+]

@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest something the package should do
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The package stays generic: it formats figures into SRU files. Broker-specific parsing, currency rates and storage belong in the application that uses it (see CONTRIBUTING.md, "Scope").
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The K4 situation or workflow, with a link to Skatteverket's documentation if a rule is involved.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would help?
