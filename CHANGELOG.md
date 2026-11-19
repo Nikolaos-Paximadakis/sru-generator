@@ -41,8 +41,10 @@ First public release.
 - Character conversion for names ISO-8859-1 cannot hold comes from the optional
   [text-converters](https://github.com/Nikolaos-Paximadakis/text-converters) package:
   `load_character_converter(name)` (also behind the CLI's `--character-conversion` and
-  `SRUConfig.get_character_converter()`) imports it lazily when installed; `"none"`
-  imports nothing. sru-generator still has no runtime dependencies.
+  `SRUConfig.get_character_converter()`) imports it lazily when installed (tested with
+  0.2.0: `pip install "git+https://github.com/Nikolaos-Paximadakis/text-converters.git@v0.2.0"`);
+  `"none"` imports nothing. sru-generator still has no runtime dependencies. The bundled
+  fallback gives the same output as text-converters 0.2.0, including French œ/æ as oe/ae.
 
 ### Quality
 - Typed (`py.typed`); `mypy --strict` and pyright strict pass. ruff, strict pytest
