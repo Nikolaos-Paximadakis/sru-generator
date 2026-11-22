@@ -79,7 +79,7 @@ from .sru_generator import (
 )
 from .validators import TradeDataValidator, validate_personal_info, validate_trade_data
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 # Deprecated top-level names: character conversion belongs to text-converters. They
 # still work (from the bundled copy) with a DeprecationWarning, and go away in 2.0.

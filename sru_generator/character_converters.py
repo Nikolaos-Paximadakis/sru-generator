@@ -291,11 +291,10 @@ CONVERTER_NAMES: tuple[str, ...] = (
     "spanish",
 )
 
-#: Where text-converters comes from (it is not on PyPI), pinned to a tested release.
-TEXT_CONVERTERS_SOURCE = (
-    "git+https://github.com/Nikolaos-Paximadakis/text-converters.git@v0.2.0"
-)
-TEXT_CONVERTERS_INSTALL = f'pip install "{TEXT_CONVERTERS_SOURCE}"'
+#: Where text-converters comes from: PyPI (from 0.2.1). An outdated copy is caught by
+#: the behaviour check below, so the hint needs no version pin.
+TEXT_CONVERTERS_SOURCE = "text-converters"
+TEXT_CONVERTERS_INSTALL = f"pip install {TEXT_CONVERTERS_SOURCE}"
 #: A text-converters whose Greek converter does not give this is outdated (its old rules
 #: wrote "THessalonikh Papadopoylos") and is not used. Checking behaviour rather than a
 #: version number keeps working however that package numbers its releases.

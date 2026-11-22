@@ -2,8 +2,8 @@
 """
 Example demonstrating character conversion for SRU files.
 
-Converters come from the text-converters package (not on PyPI):
-    pip install "git+https://github.com/Nikolaos-Paximadakis/text-converters.git@v0.2.0"
+Converters come from the text-converters package:
+    pip install text-converters
 Inside an application, sru_generator.load_character_converter(name) gives the same
 converters and falls back to sru-generator's bundled copy (deprecated) when
 text-converters is not installed.
@@ -16,8 +16,7 @@ try:
     from text_converters import get_character_converter
 except ImportError:
     raise SystemExit(
-        "This example needs text-converters: pip install "
-        '"git+https://github.com/Nikolaos-Paximadakis/text-converters.git@v0.2.0"'
+        "This example needs text-converters: pip install text-converters"
     ) from None
 
 ME: PersonalInfo = {

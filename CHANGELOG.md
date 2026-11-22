@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file. The format foll
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [semantic versioning](https://semver.org/).
 
+## [1.0.1] - 2026-11-22
+
+### Changed
+- text-converters is on PyPI (from 0.2.1), so the install hint in the deprecation
+  warning, the CLI's note, the README and the example is now
+  `pip install text-converters` instead of the pinned git URL. No version pin is needed:
+  an outdated copy is still detected by its output and not used.
+- CI also tests against the latest text-converters from PyPI.
+
 ## [1.0.0] - 2026-11-22
 
 First public release.
