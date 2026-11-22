@@ -133,8 +133,9 @@ class TestCharacterConverters(unittest.TestCase):
             "import sys; before = list(sys.path); import sru_generator; "
             "assert sys.path == before, set(sys.path) ^ set(before)"
         )
-        # Fixed argv: this interpreter and a literal snippet, no outside input.
-        subprocess.run([sys.executable, "-c", code], check=True)  # noqa: S603
+        subprocess.run(  # noqa: S603 -- fixed argv: this interpreter and a literal
+            [sys.executable, "-c", code], check=True
+        )
 
 
 class TestFractionalQuantity(unittest.TestCase):
