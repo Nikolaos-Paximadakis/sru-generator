@@ -1,7 +1,6 @@
 """Bugs found while hardening the package for strict typing (one test class per fix)."""
 
 import unittest
-import warnings
 from collections import UserDict
 from decimal import Decimal
 from pathlib import Path
@@ -274,13 +273,12 @@ class TestLowerLevelWritersAreCheckedToo(unittest.TestCase):
 
 
 class TestSRUConfigReviewFixes(unittest.TestCase):
-    def test_copy_does_not_repeat_the_warning(self) -> None:
-        with self.assertWarns(DeprecationWarning):
-            config = create_config(validation_level="strict")
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            copied = config.copy()
-        self.assertEqual(copied.validation_level, config.validation_level)
+    def test_copy_is_equal_and_independent(self) -> None:
+        config = create_config(exchange_rates={"USD_SEK": 10.0})
+        copied = config.copy()
+        self.assertEqual(copied, config)
+        copied.set_exchange_rate("EUR", "SEK", 11.0)
+        self.assertEqual(config.exchange_rates, {"USD_SEK": 10.0})
 
     def test_bad_values_are_configuration_errors(self) -> None:
         cases: list[dict[str, object]] = [
@@ -290,16 +288,19 @@ class TestSRUConfigReviewFixes(unittest.TestCase):
             {"character_converter": ["greek"]},
             {"default_currency": 3},
             {"no_such_option": True},
-            {"log_level": []},
-            {"batch_size": "9"},
             {"exchange_rates": {"USD_SEK": float("inf")}},
+            {"exchange_rates": {"USD_SEK": True}},
+            {"exchange_rates": {1: 10.0}},
         ]
         for options in cases:
             with self.subTest(options=options):
                 with self.assertRaises(ConfigurationError):
                     SRUConfig.from_dict(dict(options))
-        with self.assertRaises(ConfigurationError):
-            create_config(validation_level="bogus")
+            if "no_such_option" in options:
+                continue  # the constructor raises TypeError for that, as any class does
+            with self.subTest(constructor=options):  # the constructor checks too
+                with self.assertRaises(ConfigurationError):
+                    SRUConfig(**options)  # type: ignore[arg-type]  # untyped callers
 
 
 class TestAnnotatedInputTypesAreAccepted(unittest.TestCase):

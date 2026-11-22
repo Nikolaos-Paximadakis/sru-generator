@@ -21,7 +21,6 @@ from sru_generator import (
     validate_personal_info,
     validate_trade_data,
 )
-from sru_generator.config import ValidationLevel
 
 
 class TestSRUConfig(unittest.TestCase):
@@ -32,7 +31,7 @@ class TestSRUConfig(unittest.TestCase):
         config = SRUConfig()
         self.assertEqual(config.character_converter, "none")
         self.assertEqual(config.default_currency, "SEK")
-        self.assertFalse(config.auto_convert_currency)  # nothing converts automatically
+        self.assertEqual(config.exchange_rates, {})
 
     def test_custom_config(self) -> None:
         """Test custom configuration creation."""
@@ -40,11 +39,20 @@ class TestSRUConfig(unittest.TestCase):
         self.assertEqual(config.character_converter, "greek")
         self.assertEqual(config.default_currency, "USD")
 
-    def test_fields_without_effect_warn_but_still_work(self) -> None:
-        """validation_level is read by nothing: setting it warns (removal in 2.0)."""
-        with self.assertWarnsRegex(DeprecationWarning, "validation_level"):
-            config = create_config(validation_level="strict")
-        self.assertEqual(config.validation_level, ValidationLevel.STRICT)
+    def test_the_fields_removed_in_2_0_are_unknown_keys(self) -> None:
+        """Old dicts with a removed field fail loudly rather than being ignored."""
+        for key, value in (
+            ("validation_level", "strict"),
+            ("rounding_mode", "half_even"),
+            ("auto_convert_currency", False),
+            ("log_level", "INFO"),
+            ("custom_validators", {}),
+        ):
+            with (
+                self.subTest(key=key),
+                self.assertRaisesRegex(ConfigurationError, f"Unknown .*{key}"),
+            ):
+                SRUConfig.from_dict({key: value})
 
     def test_defaults_and_copies_do_not_warn(self) -> None:
         with warnings.catch_warnings():
@@ -53,10 +61,16 @@ class TestSRUConfig(unittest.TestCase):
             get_default_config()
 
     def test_from_dict_leaves_the_callers_dict_alone(self) -> None:
-        options: dict[str, object] = {"character_converter": "greek"}
+        rates = {"USD_SEK": 10.0}
+        options: dict[str, object] = {
+            "character_converter": "greek",
+            "exchange_rates": rates,
+        }
         before = dict(options)
-        SRUConfig.from_dict(options)
+        config = SRUConfig.from_dict(options)
         self.assertEqual(options, before)
+        config.set_exchange_rate("EUR", "SEK", 11.0)
+        self.assertEqual(rates, {"USD_SEK": 10.0})  # copied, not shared
 
     def test_invalid_character_converter(self) -> None:
         """Test invalid character converter raises error."""
@@ -90,12 +104,9 @@ class TestSRUConfig(unittest.TestCase):
         config_dict = {
             "character_converter": "greek",
             "default_currency": "USD",
-            "validation_level": "strict",
         }
-        with self.assertWarns(DeprecationWarning):
-            config = SRUConfig.from_dict(config_dict)
-        self.assertEqual(config_dict["validation_level"], "strict")  # not mutated
-
+        config = SRUConfig.from_dict(config_dict)
+        self.assertEqual(config.to_dict(), {**config_dict, "exchange_rates": {}})
         self.assertEqual(config.character_converter, "greek")
         self.assertEqual(config.default_currency, "USD")
 
@@ -293,15 +304,15 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(sale_sek, Decimal("15750.00"))
         self.assertEqual(sale_sek - cost_sek, Decimal("1050.00"))
 
-        # Test character converter. Without text-converters installed this is the
-        # bundled copy, which warns; force that case so the test does not depend on
-        # what is installed.
+        # Without text-converters a named converter is a configuration error; force
+        # that case so the test does not depend on what is installed.
         with (
             patch.dict(sys.modules, {"text_converters": None}),
-            self.assertWarns(DeprecationWarning),
+            self.assertRaisesRegex(
+                ConfigurationError, "sru-generator\\[transliterate\\]"
+            ),
         ):
-            converter = config.get_character_converter()
-        self.assertEqual(converter("Ελλάδα"), "Ellada")
+            config.get_character_converter()
 
 
 if __name__ == "__main__":

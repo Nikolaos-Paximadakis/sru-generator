@@ -1,22 +1,21 @@
-"""load_character_converter: text-converters when installed, else the bundled copy."""
+"""load_character_converter: named converters come from text-converters, or raise."""
 
 import importlib
 import os
 import subprocess
 import sys
 import types
-import warnings
 from collections.abc import Callable
 
 import pytest
 
 import sru_generator
-from sru_generator import character_converters as bundled
+from sru_generator import ConfigurationError, SRUGeneratorError
+from sru_generator import character_converters as loader
 from sru_generator.character_converters import (
-    BUNDLED_CONVERTERS_WARNING,
     CONVERTER_NAMES,
+    TEXT_CONVERTERS_INSTALL,
     load_character_converter,
-    resolve_character_converter,
 )
 
 
@@ -29,7 +28,7 @@ def _fake_text_converters(
     other names return a marker so tests can see which implementation ran.
     """
     asked: list[str] = []
-    probe_in, probe_out = bundled._GREEK_PROBE
+    probe_in, probe_out = loader._GREEK_PROBE
 
     def get_character_converter(name: str) -> Callable[[str], str]:
         asked.append(name)
@@ -39,7 +38,6 @@ def _fake_text_converters(
         return lambda text: f"<{name}:{text}>"
 
     module = types.ModuleType("text_converters")
-    module.__dict__["__version__"] = "0.1.0"
     module.__dict__["get_character_converter"] = get_character_converter
     monkeypatch.setitem(sys.modules, "text_converters", module)
     return asked
@@ -54,48 +52,79 @@ def test_text_converters_is_used_when_installed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     asked = _fake_text_converters(monkeypatch)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        converter = load_character_converter("greek")
-    assert converter("Ελλάδα") == "<greek:Ελλάδα>"
-    assert "greek" in asked
+    converter = load_character_converter("swedish")
+    assert converter("Åsa") == "<swedish:Åsa>"
+    assert "swedish" in asked
 
 
-def test_bundled_copy_with_a_warning_when_absent(
+def test_a_missing_text_converters_is_a_configuration_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _no_text_converters(monkeypatch)
-    with pytest.warns(DeprecationWarning, match="removed in 2.0") as caught:
-        converter = load_character_converter("greek")
-    assert converter("Θεσσαλονίκη") == "Thessaloniki"
-    assert str(caught[0].message) == BUNDLED_CONVERTERS_WARNING
-    assert BUNDLED_CONVERTERS_WARNING.endswith("pip install text-converters")
-    assert "git+" not in BUNDLED_CONVERTERS_WARNING
+    with pytest.raises(ConfigurationError) as caught:
+        load_character_converter("greek")
+    error = caught.value
+    assert isinstance(error, SRUGeneratorError)
+    assert "'greek'" in str(error)
+    assert str(error).endswith(TEXT_CONVERTERS_INSTALL)
+    assert TEXT_CONVERTERS_INSTALL == 'pip install "sru-generator[transliterate]"'
+    assert isinstance(error.__cause__, ImportError)
+    assert error.config_key == "character_converter"
+    assert error.config_value == "greek"
 
 
-def test_an_outdated_text_converters_is_not_used(
+def test_an_outdated_text_converters_is_refused(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Old rules (THessalonikh) fail the behaviour check; the bundled copy is better."""
+    """Old rules (THessalonikh) fail the behaviour check."""
     _fake_text_converters(monkeypatch, outdated=True)
-    with pytest.warns(DeprecationWarning):
-        converter = load_character_converter("greek")
-    assert converter("Θεσσαλονίκη") == "Thessaloniki"
+    with pytest.raises(ConfigurationError, match=r"outdated.*--upgrade"):
+        load_character_converter("greek")
 
 
-def test_none_imports_nothing_and_does_not_warn(
+@pytest.mark.parametrize(
+    "module_contents",
+    [
+        {},  # no get_character_converter at all
+        {"get_character_converter": "not callable"},
+        {"get_character_converter": lambda name: None},  # greek is not callable
+    ],
+    ids=["missing-factory", "factory-not-callable", "converter-not-callable"],
+)
+def test_a_text_converters_without_the_contract_is_refused(
+    monkeypatch: pytest.MonkeyPatch, module_contents: dict[str, object]
+) -> None:
+    module = types.ModuleType("text_converters")
+    module.__dict__.update(module_contents)
+    monkeypatch.setitem(sys.modules, "text_converters", module)
+    with pytest.raises(ConfigurationError, match="outdated"):
+        load_character_converter("swedish")
+
+
+def test_a_non_callable_named_converter_is_refused(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    probe_in, probe_out = loader._GREEK_PROBE
+
+    def converters(name: str) -> object:
+        if name == "greek":
+            return lambda text: probe_out if text == probe_in else text
+        return None
+
+    module = types.ModuleType("text_converters")
+    module.__dict__["get_character_converter"] = converters
+    monkeypatch.setitem(sys.modules, "text_converters", module)
+    with pytest.raises(ConfigurationError, match="'french'"):
+        load_character_converter("french")
+
+
+def test_none_imports_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
     asked = _fake_text_converters(monkeypatch)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        converter = load_character_converter("none")
+    converter = load_character_converter("none")
     assert converter("Åsa Ελλάδα") == "Åsa Ελλάδα"
     assert asked == []
     _no_text_converters(monkeypatch)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        assert load_character_converter("none")("x") == "x"
+    assert load_character_converter("none")("x") == "x"
 
 
 def test_unknown_names_are_refused(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -104,22 +133,10 @@ def test_unknown_names_are_refused(monkeypatch: pytest.MonkeyPatch) -> None:
         load_character_converter("klingon")
 
 
-def test_resolve_reports_the_source_without_warning(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    _no_text_converters(monkeypatch)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        assert resolve_character_converter("swedish")[1] is True
-        assert resolve_character_converter("none")[1] is False
-    _fake_text_converters(monkeypatch)
-    assert resolve_character_converter("swedish")[1] is False
-
-
 def test_a_converter_returning_a_non_string_is_an_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    probe_in, probe_out = bundled._GREEK_PROBE
+    probe_in, probe_out = loader._GREEK_PROBE
 
     def converters(name: str) -> Callable[[str], object]:
         return lambda text: probe_out if text == probe_in else 42
@@ -131,60 +148,57 @@ def test_a_converter_returning_a_non_string_is_an_error(
         load_character_converter("greek")("x")
 
 
-def test_old_top_level_names_still_work_with_a_warning() -> None:
-    for name in (
+@pytest.mark.parametrize(
+    "name",
+    [
         "CHARACTER_CONVERTERS",
         "convert_greek_characters_to_english",
         "get_character_converter",
         "no_conversion",
-    ):
-        with pytest.warns(DeprecationWarning, match=f"sru_generator.{name}"):
-            value = getattr(sru_generator, name)
-        assert value is getattr(bundled, name)
-        assert name not in sru_generator.__all__
+        "resolve_character_converter",
+    ],
+)
+def test_the_removed_top_level_names_are_gone(name: str) -> None:
+    assert not hasattr(sru_generator, name)
+    assert not hasattr(loader, name) or name == "no_conversion"
+    assert name not in sru_generator.__all__
+
+
+def test_load_character_converter_is_public() -> None:
     assert "load_character_converter" in sru_generator.__all__
 
 
-def test_importing_the_package_does_not_warn() -> None:
-    # A fresh interpreter: the deprecated names must warn only when used.
-    code = "import sru_generator; from sru_generator import load_character_converter"
+def test_importing_the_package_does_not_import_text_converters() -> None:
+    code = (
+        "import sys, sru_generator; "
+        "assert 'text_converters' not in sys.modules, 'imported eagerly'"
+    )
     subprocess.run(  # noqa: S603 -- fixed argv: this interpreter and a literal
         [sys.executable, "-W", "error::DeprecationWarning", "-c", code], check=True
     )
 
 
-PARITY_SAMPLES = (
-    "Θεσσαλονίκη Χανιά Ηράκλειο Παπαδόπουλος ΑΘΗΝΑ ΚΑΛΥΨ Χ. Ούζο Υδρα",
-    "Åsa Öberg Göteborg É è Ü Ñ Ç",
-    "Größe Straße Ärger Öl Übel",
-    "François Ça Éé Àà Ôô Ÿ cœur Œuvre ex æquo Ægir",
-    "Niño Señor Ángel Íñigo Úrsula",
-)
-
-
 #: Set in CI's text-converters job: a missing or outdated package fails, never skips.
 REQUIRE_TEXT_CONVERTERS = os.environ.get("SRU_REQUIRE_TEXT_CONVERTERS") == "1"
 
+#: One sample per converter, with the result text-converters' contract promises.
+CONTRACT_SAMPLES = {
+    "none": ("Åsa Ελλάδα", "Åsa Ελλάδα"),
+    "greek": ("Θεσσαλονίκη ΑΘΗΝΑ Παπαδόπουλος", "Thessaloniki ATHINA Papadopoulos"),
+    "swedish": ("Åsa Öberg", "Asa Oberg"),
+    "german": ("Größe", "Groesse"),
+    "french": ("cœur Œuvre", "coeur Oeuvre"),
+    "spanish": ("Niño", "Nino"),
+}
 
-def test_parity_with_the_real_text_converters() -> None:
-    """Compares with the real package: `uv run --with text-converters pytest`."""
+
+def test_contract_with_the_real_text_converters() -> None:
+    """The loader against the real package: `uv run --with text-converters pytest`."""
     if REQUIRE_TEXT_CONVERTERS:
         real = importlib.import_module("text_converters")  # must exist here
     else:
         real = pytest.importorskip("text_converters")
-    current = (
-        real.get_character_converter("greek")(bundled._GREEK_PROBE[0])
-        == bundled._GREEK_PROBE[1]
-    )
-    if not current:
-        if REQUIRE_TEXT_CONVERTERS:
-            pytest.fail("the installed text-converters is outdated")
-        pytest.skip("an outdated text-converters is installed")
-    for name in CONVERTER_NAMES:  # sru-generator uses it, not the bundled copy
-        assert resolve_character_converter(name)[1] is False, name
-    for name in CONVERTER_NAMES:
-        external = real.get_character_converter(name)
-        local = bundled.CHARACTER_CONVERTERS[name]
-        for sample in PARITY_SAMPLES:
-            assert external(sample) == local(sample), (name, sample)
     assert set(real.CHARACTER_CONVERTERS) == set(CONVERTER_NAMES)
+    assert set(CONTRACT_SAMPLES) == set(CONVERTER_NAMES)
+    for name, (sample, expected) in CONTRACT_SAMPLES.items():
+        assert load_character_converter(name)(sample) == expected, name

@@ -489,19 +489,22 @@ def _run_trades_with_conversion(
     return output.read_bytes().decode("iso-8859-1")
 
 
-def test_cli_notes_the_bundled_converter_on_stderr(
+def test_cli_without_text_converters_is_a_usage_error(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setitem(sys.modules, "text_converters", None)  # not installed
-    _run_trades_with_conversion(tmp_path, monkeypatch, "greek")
+    with pytest.raises(SystemExit) as exc_info:
+        _run_trades_with_conversion(tmp_path, monkeypatch, "greek")
+    assert exc_info.value.code == 2
     err = capsys.readouterr().err
-    assert "bundled 'greek' converter" in err
-    assert "Install text-converters: pip install text-converters\n" in err
+    assert "'greek' character converter needs text-converters" in err
+    assert 'pip install "sru-generator[transliterate]"' in err
+    assert not (tmp_path / "out.sru").exists()
 
 
-def test_cli_is_quiet_with_text_converters_or_none(
+def test_cli_uses_text_converters_and_needs_nothing_for_none(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -517,6 +520,8 @@ def test_cli_is_quiet_with_text_converters_or_none(
     monkeypatch.setitem(sys.modules, "text_converters", module)
     content = _run_trades_with_conversion(tmp_path, monkeypatch, "greek")
     assert "#UPPGIFT 3101 ABB-tc\n" in content  # text-converters' converter ran
-    assert "bundled" not in capsys.readouterr().err
-    _run_trades_with_conversion(tmp_path, monkeypatch, "none")
-    assert "bundled" not in capsys.readouterr().err
+    assert capsys.readouterr().err == ""
+    monkeypatch.setitem(sys.modules, "text_converters", None)  # not installed
+    content = _run_trades_with_conversion(tmp_path, monkeypatch, "none")
+    assert "#UPPGIFT 3101 ABB\n" in content
+    assert capsys.readouterr().err == ""

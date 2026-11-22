@@ -12,18 +12,14 @@ import json
 import logging
 import os
 import sys
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import TypeGuard
 
-from .character_converters import (
-    CONVERTER_NAMES,
-    TEXT_CONVERTERS_INSTALL,
-    resolve_character_converter,
-)
-from .exceptions import SRUGeneratorError
+from .character_converters import CONVERTER_NAMES, load_character_converter
+from .exceptions import ConfigurationError, SRUGeneratorError
 from .sru_generator import (
     generate_sru_info_content,
     generate_sru_trade_content,
@@ -193,22 +189,6 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _character_converter(name: str) -> Callable[[str], str]:
-    """The converter for --character-conversion, with a note if it is the bundled one.
-
-    The library warns with DeprecationWarning, which Python hides from CLI users, so
-    the CLI says it on stderr instead.
-    """
-    converter, from_bundled = resolve_character_converter(name)
-    if from_bundled:
-        print(
-            f"Note: using sru-generator's bundled '{name}' converter, which will be "
-            f"removed in 2.0. Install text-converters: {TEXT_CONVERTERS_INSTALL}",
-            file=sys.stderr,
-        )
-    return converter
-
-
 def main() -> None:
     """Main CLI entry point."""
     parser = build_parser()
@@ -232,13 +212,16 @@ def main() -> None:
         details = validate_personal_details(
             resolve_personal_details(args, ["personal_number", "full_name"], parser)
         )
+        try:  # before reading the data: a missing text-converters is a usage error
+            character_converter = load_character_converter(args.character_conversion)
+        except ConfigurationError as e:
+            parser.error(str(e))
         raw_trades = load_trade_data(args.data)
         try:
             trade_data = validate_trade_data(raw_trades)
         except SRUGeneratorError as e:
             sys.exit(f"Invalid trade data in {args.data}: {e}")
         try:
-            character_converter = _character_converter(args.character_conversion)
             trade_content = generate_sru_trade_content(
                 trade_data=trade_data,
                 full_name=details["full_name"],

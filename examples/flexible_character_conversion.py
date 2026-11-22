@@ -3,10 +3,9 @@
 Example demonstrating character conversion for SRU files.
 
 Converters come from the text-converters package:
-    pip install text-converters
+    pip install "sru-generator[transliterate]"
 Inside an application, sru_generator.load_character_converter(name) gives the same
-converters and falls back to sru-generator's bundled copy (deprecated) when
-text-converters is not installed.
+converters by name; without text-converters it raises ConfigurationError.
 """
 
 from sru_generator import build_blanketter_sru, write_sru_file
@@ -16,7 +15,7 @@ try:
     from text_converters import get_character_converter
 except ImportError:
     raise SystemExit(
-        "This example needs text-converters: pip install text-converters"
+        'This example needs text-converters: pip install "sru-generator[transliterate]"'
     ) from None
 
 ME: PersonalInfo = {

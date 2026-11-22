@@ -114,8 +114,8 @@ WHOLE_NUMBER_ROUNDING = Decimal("1")
 # - Because it is derived, the question of which way a negative amount truncates never
 #   arises.
 #
-# This is Skatteverket's rule rather than a preference, so it is deliberately not routed
-# through `SRUConfig.rounding_mode`.
+# This is Skatteverket's rule rather than a preference, so it is deliberately not a
+# setting (SRUConfig.rounding_mode, which never reached it, was removed in 2.0).
 K4_SALE_PRICE_ROUNDING = ROUND_FLOOR
 K4_COST_BASIS_ROUNDING = ROUND_CEILING
 NUMBER_OF_CHARACTERS_FOR_STOCK_NAME = 80
