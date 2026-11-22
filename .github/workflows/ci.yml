@@ -60,6 +60,30 @@ jobs:
       - name: pyright --strict (package)
         run: uvx pyright@1.1.414
 
+  text-converters:
+    # The optional text-converters, latest from PyPI, against our converter tests.
+    # This replaces an upper version cap: a breaking release shows up here.
+    runs-on: ubuntu-latest
+    env:
+      SRU_REQUIRE_TEXT_CONVERTERS: "1"  # missing or outdated fails instead of skipping
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Install dependencies (exactly as locked)
+        run: uv sync --group dev --locked
+
+      - name: Converter tests with text-converters from PyPI
+        run: |
+          uv run --with text-converters --refresh-package text-converters \
+            python -c "import importlib.metadata as m; print('text-converters', m.version('text-converters'))"
+          uv run --with text-converters \
+            pytest tests/test_converter_loading.py tests/test_examples.py tests/test_cli.py
+
   package:
     runs-on: ubuntu-latest
     steps:

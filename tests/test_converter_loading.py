@@ -1,5 +1,7 @@
 """load_character_converter: text-converters when installed, else the bundled copy."""
 
+import importlib
+import os
 import subprocess
 import sys
 import types
@@ -160,14 +162,26 @@ PARITY_SAMPLES = (
 )
 
 
+#: Set in CI's text-converters job: a missing or outdated package fails, never skips.
+REQUIRE_TEXT_CONVERTERS = os.environ.get("SRU_REQUIRE_TEXT_CONVERTERS") == "1"
+
+
 def test_parity_with_the_real_text_converters() -> None:
-    """Compares with the real package: `uv run --with ../text_converters pytest`."""
-    real = pytest.importorskip("text_converters")
-    if (
+    """Compares with the real package: `uv run --with text-converters pytest`."""
+    if REQUIRE_TEXT_CONVERTERS:
+        real = importlib.import_module("text_converters")  # must exist here
+    else:
+        real = pytest.importorskip("text_converters")
+    current = (
         real.get_character_converter("greek")(bundled._GREEK_PROBE[0])
-        != (bundled._GREEK_PROBE[1])
-    ):
+        == bundled._GREEK_PROBE[1]
+    )
+    if not current:
+        if REQUIRE_TEXT_CONVERTERS:
+            pytest.fail("the installed text-converters is outdated")
         pytest.skip("an outdated text-converters is installed")
+    for name in CONVERTER_NAMES:  # sru-generator uses it, not the bundled copy
+        assert resolve_character_converter(name)[1] is False, name
     for name in CONVERTER_NAMES:
         external = real.get_character_converter(name)
         local = bundled.CHARACTER_CONVERTERS[name]

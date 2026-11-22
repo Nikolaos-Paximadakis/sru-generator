@@ -1,6 +1,7 @@
 """Every example runs, and every SRU file it writes is complete."""
 
 import importlib.util
+import os
 import shutil
 import subprocess
 import sys
@@ -20,7 +21,9 @@ def test_example_runs_and_writes_complete_files(example: str, tmp_path: Path) ->
         "import text_converters" in source or "from text_converters" in source
     )
     if uses_text_converters and importlib.util.find_spec("text_converters") is None:
-        pytest.skip("needs text-converters: uv run --with ../text_converters pytest")
+        if os.environ.get("SRU_REQUIRE_TEXT_CONVERTERS") == "1":
+            pytest.fail("SRU_REQUIRE_TEXT_CONVERTERS=1 but text-converters is missing")
+        pytest.skip("needs text-converters: uv run --with text-converters pytest")
     for data in EXAMPLES.glob("*.json"):
         shutil.copy(data, tmp_path)
     result = subprocess.run(  # noqa: S603 -- fixed argv: this interpreter and a repo file
