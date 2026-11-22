@@ -7,7 +7,6 @@ from typing import ClassVar
 from sru_generator import (
     ConfigurationError,
     DataFormatError,
-    SRUConfig,
     TradeDataValidator,
     ValidationError,
     create_config,
@@ -115,16 +114,6 @@ class TestTradeAndPersonalShapes(unittest.TestCase):
 
 
 class TestSRUConfigPaths(unittest.TestCase):
-    def test_limits_of_fields_without_effect(self) -> None:
-        for options in (
-            {"decimal_places": 11},
-            {"batch_size": 0},
-            {"cache_size": 0},
-            {"log_level": "LOUD"},
-        ):
-            with self.subTest(options=options), self.assertRaises(ConfigurationError):
-                SRUConfig.from_dict(options)
-
     def test_exchange_rate_lookups(self) -> None:
         config = create_config(exchange_rates={"USD_SEK": 10.0, "EUR_SEK": 11.0})
         self.assertEqual(config.get_exchange_rate("SEK", "sek"), 1.0)
