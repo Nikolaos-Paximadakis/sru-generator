@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-`sru-generator` (v1.0.0) — installable Python package for generating Swedish Skatteverket SRU tax files (K4 form). Zero external runtime dependencies; stdlib only. Python >= 3.11.
+`sru-generator` (v2.0.0) — installable Python package for generating Swedish Skatteverket SRU tax files (K4 form). Zero required runtime dependencies; stdlib only (optional extra `transliterate` = text-converters). Python >= 3.11.
 
 ## Common Commands
 
@@ -35,8 +35,8 @@ models.py                   ← Public generic input types for personal info, tr
 sru_generator.py            ← Core generation logic (functional, field constants, grouping)
 validators.py               ← Validator class hierarchy; TradeDataValidator, PersonalInfoValidator
 currency.py                 ← CurrencyConverter class + module-level globals; 10 supported currencies
-config.py                   ← SRUConfig dataclass + ValidationLevel/RoundingMode enums
-character_converters.py     ← load_character_converter (text-converters if installed) + bundled fallback maps (removed in 2.0)
+config.py                   ← SRUConfig dataclass (character_converter, default_currency, exchange_rates)
+character_converters.py     ← load_character_converter: names → text-converters (no bundled rules)
 exceptions.py               ← Exception hierarchy rooted at SRUGeneratorError
 utils.py                    ← setup_logger() only
 __init__.py                 ← Re-exports ~70 public symbols as the package API
@@ -85,15 +85,15 @@ Use `create_custom_validator(field_name, callable)` for factory-pattern extensio
 
 ### Configuration
 
-`SRUConfig` (dataclass in `config.py`): only `character_converter`, `default_currency` and `exchange_rates` do anything; the fields in `NO_EFFECT_FIELDS` warn when set to a non-default value (removal in 2.0). It lists: `character_converter` (string key), `validation_level` (`ValidationLevel` enum: NONE/BASIC/STRICT), `rounding_mode` (`RoundingMode` enum), `default_currency`, `auto_convert_currency`, `exchange_rates` dict, `log_level`, `custom_validators`, `custom_formatters`. `DEFAULT_CONFIG` is a module-level singleton; call `get_default_config()` to get a mutable copy via `.copy()`.
+`SRUConfig` (dataclass in `config.py`) has exactly three fields: `character_converter` (a name from `CONVERTER_NAMES`), `default_currency`, `exchange_rates`. The 15 no-effect fields, `NO_EFFECT_FIELDS` and the `ValidationLevel`/`RoundingMode` enums were removed in 2.0. Each field has a `_check_*` function used by both `__post_init__` and `from_dict`; `from_dict` takes `Mapping[str, object]` (no `Any`), refuses unknown keys with `ConfigurationError` and copies `exchange_rates`. `DEFAULT_CONFIG` is a module-level singleton; call `get_default_config()` to get a mutable copy via `.copy()`.
 
 Exchange rate resolution order: direct key `FROM_TO` → inverse key `TO_FROM` → transitive through `default_currency` (SEK). `SRUConfig.from_dict()` and `create_config()` accept string values for enum fields (`"strict"`, `"half_even"`); the direct constructor requires the enum members. `from_dict` copies its input.
 
 ### character_converters
 
-Character conversion belongs to the separate `text-converters` package. `load_character_converter(name)` (and `resolve_character_converter`, which also reports whether it fell back) is the only way the CLI and `SRUConfig.get_character_converter()` get a converter: `"none"` is the identity and imports nothing; any other name lazily imports `text_converters` through `importlib.import_module` (no stubs needed under strict mypy/pyright) and uses its `get_character_converter`, if it is installed and current: its Greek converter must turn `Θεσσαλονίκη Παπαδόπουλος` into `Thessaloniki Papadopoulos` (`_GREEK_PROBE`); an older copy had the old rules. A behaviour check, not a version check, because text-converters restarted its numbering at 0.1.0. Otherwise the bundled copy in this module is used with a `DeprecationWarning`; the CLI prints a stderr note instead, since DeprecationWarning is hidden from CLI users. The bundled copy and the deprecated top-level re-exports (module `__getattr__` in `__init__.py`) go away in 2.0.
+Character conversion belongs to the separate `text-converters` package; sru-generator bundles no rules (removed in 2.0 with the deprecated top-level re-exports and `resolve_character_converter`). Builders take any `Callable[[str], str]`. `load_character_converter(name)` is the only way the CLI and `SRUConfig.get_character_converter()` turn a name into a converter: `"none"` is the identity and imports nothing; an unknown name is `ValueError`; any other name lazily imports `text_converters` through `importlib.import_module` (no stubs needed under strict mypy/pyright) and uses its `get_character_converter`. Missing → `ConfigurationError` raised from the `ImportError`; installed but failing the behaviour check (its Greek converter must turn `Θεσσαλονίκη Παπαδόπουλος` into `Thessaloniki Papadopoulos`, `_GREEK_PROBE`) or lacking the contract → `ConfigurationError` "outdated". The CLI turns that into `parser.error` (exit 2) before reading the data.
 
-The earlier rule "do not import from outside the package" was about a `sys.path` hack to a sibling checkout, which never resolved. Importing an optional, *installed* package lazily is allowed; never add `sys.path` manipulation, and never make text-converters a required dependency (zero runtime dependencies stays). Install hint everywhere (`TEXT_CONVERTERS_INSTALL`): `pip install text-converters` (on PyPI from 0.2.1; no pin needed, the behaviour probe rejects an outdated copy). In 2.0 it becomes `pip install "sru-generator[transliterate]"` (extra `transliterate = ["text-converters>=0.2.1"]`, no upper cap; CI installs text-converters from PyPI instead). The bundled maps must stay identical to text-converters' (0.2.0 added French œ/æ → oe/ae). Test with it via `uv run --with ../text_converters pytest`; the parity test in `tests/test_converter_loading.py` then compares both implementations, and `tests/test_examples.py` also runs the example that imports `text_converters` (skipped without it). Quantity is accepted as a Decimal and rounded **up** to a whole antal (`round_k4_quantity`).
+Importing an optional, *installed* package lazily is allowed; never add `sys.path` manipulation, and never make text-converters a required dependency. Install hint everywhere (`TEXT_CONVERTERS_INSTALL`): `pip install "sru-generator[transliterate]"` (extra `transliterate = ["text-converters>=0.2.1"]`, no upper cap: the CI `text-converters` job tests the latest release instead). text-converters' `tests/test_downstream_contract.py` pins what we rely on. Test with it via `uv run --with text-converters pytest` (or `--with ../text_converters`); `test_contract_with_the_real_text_converters` in `tests/test_converter_loading.py` then runs the loader against the real package, and `tests/test_examples.py` also runs the example that imports `text_converters` (skipped without it). Quantity is accepted as a Decimal and rounded **up** to a whole antal (`round_k4_quantity`).
 
 ## Boundary
 
@@ -116,6 +116,6 @@ Skatteverket's SRU rules: the "Teknisk information om filöverföring" page (rep
 
 ## CI/CD
 
-GitHub Actions (`.github/workflows/ci.yml`), actions pinned to commit SHAs, read-only token: `test` (Python 3.11–3.14, `pytest --cov`, coverage floor 95% in pyproject) · `lint` (ruff check, ruff format --check, mypy --strict, pyright strict pinned to 1.1.414) · `text-converters` (latest text-converters from PyPI against the converter/example/CLI tests, `SRU_REQUIRE_TEXT_CONVERTERS=1` so it fails instead of skipping; replaces an upper version cap) · `package` (uv build, twine check --strict, install the wheel and run the CLI). The `main` ruleset requires all seven. `.github/workflows/release.yml` (Trusted Publishing): a manual run uploads to TestPyPI; publishing a GitHub release `vX.Y.Z` (must match pyproject's version) uploads to PyPI after approval of the `pypi` environment.
+GitHub Actions (`.github/workflows/ci.yml`), actions pinned to commit SHAs, read-only token: `test` (Python 3.11–3.14, `pytest --cov`, coverage floor 95% in pyproject) · `lint` (ruff check, ruff format --check, mypy --strict, pyright strict pinned to 1.1.414) · `text-converters` (latest text-converters from PyPI against the converter/example/CLI tests, `SRU_REQUIRE_TEXT_CONVERTERS=1` so it fails instead of skipping; replaces an upper version cap) · `package` (uv build, twine check --strict, install the wheel and run the CLI; install it with `[transliterate]` and convert a Greek name). The `main` ruleset requires all seven. `.github/workflows/release.yml` (Trusted Publishing): a manual run uploads to TestPyPI; publishing a GitHub release `vX.Y.Z` (must match pyproject's version) uploads to PyPI after approval of the `pypi` environment.
 
 Tests: `tests/test_properties.py` uses Hypothesis (dev dependency) for the K4 invariants; `tests/test_examples.py` runs every script in `examples/` and checks the SRU files they write are complete.

@@ -30,9 +30,12 @@ skatterådgivning — du ansvarar själv för deklarationen.
 
 ```bash
 pip install sru-generator
+pip install "sru-generator[transliterate]"   # also the named character converters
 ```
 
-Python 3.11 or newer.
+Python 3.11 or newer. The extra installs
+[text-converters](https://github.com/Nikolaos-Paximadakis/text-converters), for stock
+names in Greek and other text ISO-8859-1 cannot hold ([Characters](#characters)).
 
 ## Quick start
 
@@ -204,27 +207,29 @@ quotes — makes `write_sru_file` (returns `False`) and `encode_sru_content` (ra
 writing `?`. Pass a `character_converter` (any `str -> str` function) to transliterate
 stock names.
 
-**Converters come from [text-converters](https://github.com/Nikolaos-Paximadakis/text-converters).**
-Install it to use the named converters (`greek`, `swedish`, `german`, `french`,
-`spanish`):
+**The named converters come from [text-converters](https://github.com/Nikolaos-Paximadakis/text-converters)**
+(`greek`, `swedish`, `german`, `french`, `spanish`), installed with the `transliterate`
+extra:
 
 ```bash
-pip install text-converters
+pip install "sru-generator[transliterate]"
 ```
 
 ```python
 from sru_generator import build_blanketter_sru, load_character_converter
 
-greek = load_character_converter("greek")  # from text-converters when installed
+greek = load_character_converter("greek")  # needs the transliterate extra
 content = build_blanketter_sru(sales, me, year=2025, character_converter=greek)
 ```
 
-sru-generator still has no dependencies: text-converters is optional and imported only
-when a named converter is asked for (`"none"` never imports it). Without it,
-`load_character_converter` falls back to a copy bundled with sru-generator and warns
-(`DeprecationWarning`) that the copy will be removed in 2.0; the CLI's
-`--character-conversion` prints the same note on stderr. An outdated text-converters
-(one whose Greek converter does not give `Thessaloniki` for `Θεσσαλονίκη`) is not used.
+sru-generator bundles no conversion rules and still has no required dependencies:
+text-converters is imported only when a named converter is asked for (`"none"` never
+imports it). **Without it, a named converter raises `ConfigurationError`** with the
+install command — from `load_character_converter`, `SRUConfig.get_character_converter()`
+and the CLI's `--character-conversion` (which exits with status 2). So does an outdated
+text-converters (one whose Greek converter does not give `Thessaloniki` for
+`Θεσσαλονίκη`). A name is only a shortcut: `character_converter` takes any
+`str -> str` function, such as the recipe below.
 
 `greek` follows the Greek standard ELOT 743 letter by letter (η is `i`, ου is `ou`,
 Θ/Χ/Ψ give `Th`/`Ch`/`Ps`, or `TH`/`CH`/`PS` in a word written in capitals) but not its
@@ -317,10 +322,9 @@ except ValidationError as e:
 ### Configuration
 
 `SRUConfig` / `create_config(...)` bundle the character converter, default currency and
-exchange rates for applications that want one object to pass around. The K4 rounding
-rule is not configurable. Several older fields (`validation_level`, `rounding_mode`,
-`auto_convert_currency`, `log_level`, `custom_validators`, …) are read by nothing;
-setting one raises a `DeprecationWarning`, and they will be removed in 2.0.
+exchange rates for applications that want one object to pass around: those three fields
+are all it has. `SRUConfig.from_dict` checks each value and refuses unknown keys with a
+`ConfigurationError`. The K4 rounding rule is not configurable.
 
 ### Logging
 
@@ -338,10 +342,8 @@ amounts. The CLI shows warnings by default and more with `-v`.
   `round_k4_sale_price`, `round_k4_cost_basis`, `round_k4_quantity`
 - **Validation:** `validate_trade_data`, `validate_personal_info`,
   `TradeDataValidator`, `PersonalInfoValidator`, `create_custom_validator`
-- **Characters and encoding:** `load_character_converter` (text-converters, or the
-  bundled copy until 2.0), `encode_sru_text`, `decode_sru_bytes`, `SRU_ENCODING`.
-  `get_character_converter`, `CHARACTER_CONVERTERS`, `no_conversion` and the
-  `convert_*_characters_to_english` functions at the top level are deprecated.
+- **Characters and encoding:** `load_character_converter` (named converters, from the
+  `transliterate` extra), `encode_sru_text`, `decode_sru_bytes`, `SRU_ENCODING`
 - **Currency:** `convert_to_sek`, `convert_currency`, `set_exchange_rate`,
   `CurrencyConverter`
 - **Configuration:** `SRUConfig`, `create_config`, `get_default_config`

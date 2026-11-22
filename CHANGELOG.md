@@ -4,6 +4,48 @@ All notable changes to this project are documented in this file. The format foll
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [semantic versioning](https://semver.org/).
 
+## [2.0.0] - Unreleased
+
+Character conversion is now entirely text-converters' job, and the deprecated API from
+1.0 is gone.
+
+### Added
+- The `transliterate` extra: `pip install "sru-generator[transliterate]"` installs
+  text-converters (`>=0.2.1`) for the named character converters.
+
+### Changed
+- A named converter (`greek`, `swedish`, `german`, `french`, `spanish`) without
+  text-converters, or with an outdated one, raises `ConfigurationError` from
+  `load_character_converter` and `SRUConfig.get_character_converter()`, with the install
+  command. The CLI reports it as a usage error (exit status 2) before reading the data.
+  `"none"` still needs nothing.
+- `SRUConfig.from_dict` takes any `Mapping[str, object]`, checks the type of each value
+  and refuses unknown keys with `ConfigurationError`. `exchange_rates` is copied, not
+  shared with the caller.
+
+### Removed
+- The character converters bundled with sru-generator, and with them the fallback, its
+  `DeprecationWarning` and the CLI's stderr note.
+- The top-level names `convert_*_characters_to_english`, `get_character_converter`,
+  `CHARACTER_CONVERTERS` and `no_conversion`; from `sru_generator.character_converters`
+  also `resolve_character_converter`, `BUNDLED_CONVERTERS_WARNING` and
+  `TEXT_CONVERTERS_SOURCE`.
+- The `SRUConfig` fields that nothing read: `validation_level`, `strict_validation`,
+  `rounding_mode`, `decimal_places`, `output_format`, `encoding`, `line_ending`,
+  `auto_convert_currency`, `batch_size`, `enable_caching`, `cache_size`, `log_level`,
+  `log_file`, `custom_validators`, `custom_formatters`; `NO_EFFECT_FIELDS`; the
+  `ValidationLevel` and `RoundingMode` enums.
+
+### Migrating from 1.x
+- **Named converters:** install the extra, `pip install "sru-generator[transliterate]"`
+  (or text-converters itself), or pass your own `str -> str` function as
+  `character_converter`. Output is unchanged: the bundled copy matched text-converters.
+- **Converter functions:** import them from `text_converters` instead of
+  `sru_generator` (`from text_converters import convert_greek_characters_to_english`),
+  or use `load_character_converter(name)`.
+- **Configuration:** drop the removed keys from dicts passed to `SRUConfig.from_dict` /
+  `create_config`; they now raise `ConfigurationError` instead of warning.
+
 ## [1.0.1] - 2026-11-22
 
 ### Changed

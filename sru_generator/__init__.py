@@ -76,7 +76,7 @@ from .sru_generator import (
 )
 from .validators import TradeDataValidator, validate_personal_info, validate_trade_data
 
-__version__ = "1.0.1"
+__version__ = "2.0.0"
 
 # Library logging etiquette: stay silent unless the application configures logging.
 logging.getLogger("sru_generator").addHandler(logging.NullHandler())
