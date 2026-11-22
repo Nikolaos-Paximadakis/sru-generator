@@ -1155,6 +1155,11 @@ name = "sru-generator"
 version = "1.0.1"
 source = { editable = "." }
 
+[package.optional-dependencies]
+transliterate = [
+    { name = "text-converters" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "hypothesis" },
@@ -1167,6 +1172,8 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "text-converters", marker = "extra == 'transliterate'", specifier = ">=0.2.1" }]
+provides-extras = ["transliterate"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1177,6 +1184,15 @@ dev = [
     { name = "pytest-cov", specifier = ">=5.0" },
     { name = "ruff", specifier = ">=0.14" },
     { name = "twine" },
+]
+
+[[package]]
+name = "text-converters"
+version = "0.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/f3/a4afe6918fd8e681e0f0b6ef6bb9ae31bc823d2dc90169343e40f0108064/text_converters-0.2.1.tar.gz", hash = "sha256:a00f61ba0dce65a021eeeeec2e7f701c3edea59b82fda649d52b0eb235ff2b0b", size = 14415, upload-time = "2026-11-22T14:07:23.845Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fd/36/2de66d859d72a5bf04419bd85f2648da37df9dca5c1f14dc709deb37780f/text_converters-0.2.1-py3-none-any.whl", hash = "sha256:5abb4332a75dc02e609d9674cb90c1956ae9e3ef7d38c70a5a0492f60f20abe6", size = 7741, upload-time = "2026-11-22T14:07:22.233Z" },
 ]
 
 [[package]]

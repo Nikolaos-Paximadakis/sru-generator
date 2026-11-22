@@ -33,6 +33,11 @@ classifiers = [
 ]
 dependencies = []
 
+[project.optional-dependencies]
+# The named character converters (--character-conversion greek, ...). No upper cap: the
+# CI job `text-converters` tests the latest release instead.
+transliterate = ["text-converters>=0.2.1"]
+
 [project.urls]
 Homepage = "https://github.com/Nikolaos-Paximadakis/sru-generator"
 Repository = "https://github.com/Nikolaos-Paximadakis/sru-generator"

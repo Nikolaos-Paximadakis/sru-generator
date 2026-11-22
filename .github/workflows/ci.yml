@@ -106,3 +106,13 @@ jobs:
           uv pip install --python /tmp/wheel-check/bin/python dist/*.whl
           /tmp/wheel-check/bin/python -I -c "import sru_generator, sys; print(sru_generator.__version__)"
           /tmp/wheel-check/bin/sru-generator --help
+
+      - name: Install the wheel with the transliterate extra and convert Greek
+        run: |
+          uv venv /tmp/extra-check
+          uv pip install --python /tmp/extra-check/bin/python "$(ls dist/*.whl)[transliterate]"
+          echo '[{"quantity": 1, "stock": "Τράπεζα Πειραιώς", "net value": 200, "total net value of purchase": 100}]' > /tmp/trades.json
+          /tmp/extra-check/bin/sru-generator trades --data /tmp/trades.json \
+            --personal-number 198112189876 --full-name "A" --year 2025 \
+            --character-conversion greek --output /tmp/BLANKETTER.SRU
+          grep -q "^#UPPGIFT 3101 Trapeza Peiraios$" /tmp/BLANKETTER.SRU
