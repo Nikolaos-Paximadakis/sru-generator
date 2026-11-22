@@ -135,13 +135,12 @@ class StringValidator(Validator[str]):
                     value=value,
                 )
 
-        if self.pattern:
-            if not re.match(self.pattern, value):
-                raise ValidationError(
-                    f"Field '{self.field_name}' does not match required pattern",
-                    field=self.field_name,
-                    value=value,
-                )
+        if self.pattern and not re.match(self.pattern, value):
+            raise ValidationError(
+                f"Field '{self.field_name}' does not match required pattern",
+                field=self.field_name,
+                value=value,
+            )
 
         return value
 

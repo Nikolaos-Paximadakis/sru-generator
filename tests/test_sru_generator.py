@@ -531,7 +531,7 @@ GOLDEN_DIR = Path(__file__).parent / "golden"
 # Naive on purpose: it stands in for datetime.now(), which _timestamp() turns aware with
 # .astimezone(), keeping the wall-clock time. An aware value would shift it by the
 # machine's UTC offset and break the golden files outside UTC.
-FIXED_NOW = datetime(2024, 3, 1, 12, 0, 0)  # noqa: DTZ001
+FIXED_NOW = datetime(2024, 3, 1, 12, 0, 0)  # noqa: DTZ001 -- naive on purpose, see above
 
 # Ten rows, so the stock side spans two pages, and three crypto groups, so the crypto
 # side runs past the last stock page: both of the merge's page-count branches are in the

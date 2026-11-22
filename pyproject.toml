@@ -73,22 +73,34 @@ files = ["sru_generator", "tests"]
 include = ["sru_generator"]
 typeCheckingMode = "strict"
 pythonVersion = "3.11"
+# Only "# pyright: ignore[rule]" silences pyright ("# type: ignore" is for mypy), and an
+# ignore that no longer suppresses anything is an error.
+enableTypeIgnoreComments = false
+reportUnnecessaryTypeIgnoreComment = "error"
 
 [tool.ruff]
 target-version = "py311"
 line-length = 88
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP", "ANN", "S", "RUF", "PL", "DTZ", "PTH", "FBT"]
+select = [
+  "E", "F", "I", "B", "UP", "ANN", "S", "RUF", "PL", "DTZ", "PTH", "FBT",
+  "SIM", "PERF", "T20", "ERA",
+]
 ignore = [
   "PLR0913",  # public builders take several keyword-friendly parameters by design
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "PLR2004"]  # pytest asserts; literal expected values
+"tests/**" = [
+  "S101",     # pytest asserts
+  "PLR2004",  # literal expected values
+  "SIM117",   # `with self.subTest(...):` around `with self.assertRaises(...):` is the unittest idiom
+]
 "sru_generator/character_converters.py" = ["RUF001", "RUF002", "RUF003"]  # Greek letters are the point
 "tests/test_greek_transliteration.py" = ["RUF001", "RUF003"]  # Greek test input
 "tests/test_converter_loading.py" = ["RUF001"]  # Greek test input
+"sru_generator/cli.py" = ["T201"]  # a CLI: print is its output, to stdout and stderr
 "examples/**" = ["T201", "ANN", "PLR2004", "S"]
 
 [tool.pytest.ini_options]
