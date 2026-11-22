@@ -29,12 +29,8 @@ def test_example_runs_and_writes_complete_files(example: str, tmp_path: Path) ->
     result = subprocess.run(  # noqa: S603 -- fixed argv: this interpreter and a repo file
         [
             sys.executable,
-            # Examples must not use deprecated API; the one allowed warning is the
-            # bundled-converter fallback, which depends on what is installed.
             "-W",
-            "error::DeprecationWarning",
-            "-W",
-            "ignore:sru-generator's bundled character converters:DeprecationWarning",
+            "error::DeprecationWarning",  # examples must not use deprecated API
             str(EXAMPLES / example),
         ],
         cwd=tmp_path,

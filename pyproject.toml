@@ -97,9 +97,6 @@ ignore = [
   "PLR2004",  # literal expected values
   "SIM117",   # `with self.subTest(...):` around `with self.assertRaises(...):` is the unittest idiom
 ]
-"sru_generator/character_converters.py" = ["RUF001", "RUF002", "RUF003"]  # Greek letters are the point
-"tests/test_greek_transliteration.py" = ["RUF001", "RUF003"]  # Greek test input
-"tests/test_converter_loading.py" = ["RUF001"]  # Greek test input
 "sru_generator/cli.py" = ["T201"]  # a CLI: print is its output, to stdout and stderr
 "examples/**" = ["T201", "ANN", "PLR2004", "S"]
 

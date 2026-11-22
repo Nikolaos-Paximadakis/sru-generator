@@ -293,15 +293,15 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(sale_sek, Decimal("15750.00"))
         self.assertEqual(sale_sek - cost_sek, Decimal("1050.00"))
 
-        # Test character converter. Without text-converters installed this is the
-        # bundled copy, which warns; force that case so the test does not depend on
-        # what is installed.
+        # Without text-converters a named converter is a configuration error; force
+        # that case so the test does not depend on what is installed.
         with (
             patch.dict(sys.modules, {"text_converters": None}),
-            self.assertWarns(DeprecationWarning),
+            self.assertRaisesRegex(
+                ConfigurationError, "sru-generator\\[transliterate\\]"
+            ),
         ):
-            converter = config.get_character_converter()
-        self.assertEqual(converter("Ελλάδα"), "Ellada")
+            config.get_character_converter()
 
 
 if __name__ == "__main__":

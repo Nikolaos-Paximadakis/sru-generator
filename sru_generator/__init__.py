@@ -7,10 +7,7 @@ according to Swedish tax authority specifications.
 """
 
 import logging
-import warnings
-from typing import TYPE_CHECKING
 
-from . import character_converters
 from .amounts import to_decimal
 from .builders import build_blanketter_sru, build_info_sru, encode_sru_content
 from .character_converters import load_character_converter
@@ -80,60 +77,6 @@ from .sru_generator import (
 from .validators import TradeDataValidator, validate_personal_info, validate_trade_data
 
 __version__ = "1.0.1"
-
-# Deprecated top-level names: character conversion belongs to text-converters. They
-# still work (from the bundled copy) with a DeprecationWarning, and go away in 2.0.
-_DEPRECATED_CONVERTER_NAMES = frozenset(
-    {
-        "CHARACTER_CONVERTERS",
-        "convert_french_characters_to_english",
-        "convert_german_characters_to_english",
-        "convert_greek_characters_to_english",
-        "convert_spanish_characters_to_english",
-        "convert_swedish_characters_to_english",
-        "get_character_converter",
-        "no_conversion",
-    }
-)
-
-if TYPE_CHECKING:  # type checkers see the real names; at runtime __getattr__ warns
-    from .character_converters import CHARACTER_CONVERTERS as CHARACTER_CONVERTERS
-    from .character_converters import (
-        convert_french_characters_to_english as convert_french_characters_to_english,
-    )
-    from .character_converters import (
-        convert_german_characters_to_english as convert_german_characters_to_english,
-    )
-    from .character_converters import (
-        convert_greek_characters_to_english as convert_greek_characters_to_english,
-    )
-    from .character_converters import (
-        convert_spanish_characters_to_english as convert_spanish_characters_to_english,
-    )
-    from .character_converters import (
-        convert_swedish_characters_to_english as convert_swedish_characters_to_english,
-    )
-    from .character_converters import (
-        get_character_converter as get_character_converter,
-    )
-    from .character_converters import no_conversion as no_conversion
-
-
-def __getattr__(name: str) -> object:
-    if name in _DEPRECATED_CONVERTER_NAMES:
-        if name == "get_character_converter":
-            instead = "sru_generator.load_character_converter(name)"
-        else:
-            instead = f"text_converters.{name} (install text-converters)"
-        warnings.warn(
-            f"sru_generator.{name} is deprecated and will be removed in 2.0; "
-            f"use {instead}",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return getattr(character_converters, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
 
 # Library logging etiquette: stay silent unless the application configures logging.
 logging.getLogger("sru_generator").addHandler(logging.NullHandler())

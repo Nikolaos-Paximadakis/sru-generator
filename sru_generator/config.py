@@ -222,8 +222,8 @@ class SRUConfig:
     def get_character_converter(self) -> CharacterConverter:
         """The converter for ``character_converter`` (see ``load_character_converter``).
 
-        Uses text-converters when installed; otherwise the bundled copy, with a
-        ``DeprecationWarning``.
+        Any name but "none" needs text-converters; without it this raises
+        ``ConfigurationError``.
         """
         return load_character_converter(self.character_converter)
 
