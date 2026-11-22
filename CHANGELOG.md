@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file. The format foll
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [semantic versioning](https://semver.org/).
 
-## [1.0.1] - Unreleased
+## [1.0.1] - 2026-11-22
 
 ### Changed
 - text-converters is on PyPI (from 0.2.1), so the install hint in the deprecation
